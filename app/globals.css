@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0b1220;
+  --color-navy-light: #141d30;
+  --color-gold: #c9a227;
+  --color-gold-light: #e5c558;
+  --color-muted: #aab2c0;
+  --color-line: rgb(201 162 39 / 0.3);
+}
+
+body {
+  background: var(--color-navy);
+  color: #ffffff;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.marquee-track {
+  animation: marquee 50s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+     align-items: normal;
+}
