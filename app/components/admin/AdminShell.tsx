@@ -5,13 +5,7 @@ import Link from 'next/link';
 import { t } from './ar';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '../../lib/supabase/client';
-  const router = useRouter();
 
-  async function logout() {
-    await createClient().auth.signOut();
-    router.replace('/admin/login');
-    router.refresh();
-  }
 const ic = (path: React.ReactNode, size = 'h-5 w-5') => (
   <svg
     viewBox="0 0 24 24"
@@ -143,7 +137,14 @@ const GROUPS = [
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  async function logout() {
+    await createClient().auth.signOut();
+    router.replace('/admin/login');
+    router.refresh();
+  }
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
@@ -163,8 +164,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       window.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
   // صفحة الدخول من غير هيدر ولا قائمة
   if (pathname === '/admin/login') return <>{children}</>;
+
   return (
     // dir و lang ثابتين عربي بغض النظر عن لغة الموقع
     <div dir="rtl" lang="ar" className="min-h-screen bg-navy text-white">
@@ -219,7 +222,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             type="button"
             aria-label={t('logout')}
             title={t('logout')}
-            // TODO: supabase.auth.signOut() لما نربط الدخول
+            onClick={logout}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-muted transition hover:border-red-400 hover:text-red-400"
           >
             {ICONS.logout}
