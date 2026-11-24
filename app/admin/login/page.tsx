@@ -36,7 +36,6 @@ export default function AdminLoginPage() {
   // لو اتحوّل هنا لأن الحساب مش أدمن
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('error') === 'forbidden') {
-      createClient().auth.signOut();
       setError('الحساب ده مش مسموح له بدخول لوحة التحكم.');
     }
   }, []);
