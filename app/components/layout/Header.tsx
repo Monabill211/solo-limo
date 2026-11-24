@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-
+import HeaderAuth from './HeaderAuth';
 import LanguageSwitcher from './LanguageSwitcher';
 import CurrencySwitcher from './CurrencySwitcher';
 
@@ -114,7 +114,7 @@ export default function Header() {
             <CurrencySwitcher />
             <LanguageSwitcher />
 
-            <Link
+            {/* <Link
               href="/login"
               className="hidden text-muted transition-colors hover:text-gold-light md:block"
             >
@@ -127,7 +127,8 @@ export default function Header() {
               className="rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
             >
               {t('signup')}
-            </Link>
+            </Link> */}
+            <HeaderAuth />
           </div>
         </div>
       </div>
