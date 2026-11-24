@@ -105,7 +105,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [errorKey, setErrorKey] = useState(0);
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const isLogin = mode === 'login';
@@ -122,7 +121,6 @@ export default function LoginPage() {
   function switchMode(m: Mode) {
     setMode(m);
     setError('');
-    setMessage('');
   }
 
   function fail(msg: string) {
@@ -130,7 +128,6 @@ export default function LoginPage() {
     let text = t('genericError');
     if (m.includes('invalid login')) text = t('invalidCredentials');
     else if (m.includes('already registered')) text = t('alreadyRegistered');
-    else if (m.includes('not confirmed')) text = t('emailNotConfirmed');
     else if (m.includes('password')) text = t('weakPassword');
     setError(text);
     setErrorKey((k) => k + 1);
@@ -139,34 +136,32 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    setMessage('');
     setLoading(true);
 
     const supabase = createClient();
 
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) fail(error.message);
-      else {
-        router.push('/');
-        router.refresh();
+      if (error) {
+        fail(error.message);
+        setLoading(false);
+        return;
       }
     } else {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { full_name: fullName, phone } },
       });
-      if (error) fail(error.message);
-      else if (data.session) {
-        router.push('/');
-        router.refresh();
-      } else {
-        setMessage(t('checkEmail'));
+      if (error) {
+        fail(error.message);
+        setLoading(false);
+        return;
       }
     }
 
-    setLoading(false);
+    router.push('/');
+    router.refresh();
   }
 
   const waLink = `${WHATSAPP_URL}?text=${encodeURIComponent(t('forgotMessage') + email)}`;
@@ -370,15 +365,6 @@ export default function LoginPage() {
                 style={{ padding: '0.7rem 1rem' }}
               >
                 {error}
-              </p>
-            )}
-
-            {message && (
-              <p
-                className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-center text-sm text-emerald-300"
-                style={{ padding: '0.7rem 1rem' }}
-              >
-                {message}
               </p>
             )}
 
