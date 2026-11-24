@@ -15,7 +15,7 @@ export default function Footer() {
   return (
     <footer
       className="border-t border-line bg-navy-light"
-      style={{ marginBlockStart: '4rem', paddingBlockStart: '2.5rem' }}
+      style={{ paddingBlockStart: '2.5rem' }}
     >
       <div
         className="grid w-full max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]"
