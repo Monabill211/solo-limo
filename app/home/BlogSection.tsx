@@ -34,7 +34,9 @@ export default function BlogSection() {
   const [main, ...rest] = POSTS;
 
   return (
-    <section style={{ paddingBlock: '4.5rem' }}>
+    <section        className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
+
+    style={{ paddingBlock: '4.5rem' }}>
       <div
         className="w-full max-w-6xl"
         style={{ marginInline: 'auto', paddingInline: '1rem' }}

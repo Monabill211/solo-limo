@@ -55,6 +55,17 @@ export default function Footer() {
         style={{ marginInline: 'auto', marginBlockStart: '2.5rem', paddingBlock: '1.2rem', paddingInline: '1rem' }}
       >
 © 2026 {brand('name')} — {t('rights')}      </div>
+
+ 
+
+      <div
+        className="w-full max-w-6xl border-t border-line text-center text-sm text-muted"
+        style={{ marginInline: 'auto', marginBlockStart: '2.5rem', paddingBlock: '1.2rem', paddingInline: '1rem' }}
+      >
+        Developed by <a href="https://wa.me/201021219588" target="_blank" rel="noreferrer" className="bg-gold text-navy rounded-2xl font-bold" style={{ padding: '5px' }}>
+          MoSalah
+        </a>
+      </div>
     </footer>
   );
 }

@@ -56,7 +56,13 @@ export default function ServiceCards() {
   const t = useTranslations('ServiceCards');
 
   return (
-    <section style={{ paddingBlock: '4.5rem' }}>
+    <section
+          className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
+
+    style={{ paddingBlock: '4.5rem' ,
+        backgroundImage:"linear-gradient(to top, rgb(11 18 32 / 0.98) 15%, rgb(11 18 32 / 0.7) 55%, rgb(11 18 32 / 0.4))"
+
+    }}>
       <div
         className="w-full max-w-6xl"
         style={{ marginInline: 'auto', paddingInline: '1rem' }}

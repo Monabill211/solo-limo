@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// أي صفحة تحت /admin ما تفتحش غير للأدمن، وغير كده بيتحوّل لصفحة الدخول
 export async function proxy(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/admin/login';
 
@@ -28,25 +27,29 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let isAdmin = false;
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle();
-    isAdmin = profile?.role === 'admin';
+  // مفيش مستخدم مسجّل
+  if (!user) {
+    return isLoginPage ? response : NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  // لو القراءة فشلت (خطأ مؤقت) ما نطردش المستخدم
+  if (error) return response;
+
+  const isAdmin = profile?.role === 'admin';
+
   if (isLoginPage) {
-    // الأدمن المسجّل مالوش لازمة يشوف صفحة الدخول
-    if (isAdmin) return NextResponse.redirect(new URL('/admin', request.url));
-    return response;
+    return isAdmin ? NextResponse.redirect(new URL('/admin', request.url)) : response;
   }
 
   if (!isAdmin) {
     const url = new URL('/admin/login', request.url);
-    if (user) url.searchParams.set('error', 'forbidden');
+    url.searchParams.set('error', 'forbidden');
     return NextResponse.redirect(url);
   }
 

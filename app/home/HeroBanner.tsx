@@ -86,17 +86,45 @@ export default function HeroAboutSection() {
     <section
       className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
       style={{
-        backgroundImage:
-          "linear-gradient(to top, rgb(11 18 32 / 0.98) 15%, rgb(11 18 32 / 0.7) 55%, rgb(11 18 32 / 0.4)), url('/hero.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundImage:"linear-gradient(to top, rgb(11 18 32 / 0.98) 15%, rgb(11 18 32 / 0.7) 55%, rgb(11 18 32 / 0.4))"
+   
       }}
     >
+
       {/* إضاءة خلفية جمالية */}
       <span className="pointer-events-none absolute -bottom-32 start-1/4 h-96 w-96 rounded-full bg-gold/15 blur-3xl" />
+{/* ================= الجزء الثاني: About (مدمج في نفس السكشن) ================= */}
+      <div
+        className="relative border-t border-white/10 bg-navy/40 backdrop-blur-xs"
+        style={{ paddingBlock: '4rem' }}
+      >
+        <div
+          className="w-full max-w-3xl text-center"
+          style={{ marginInline: 'auto', paddingInline: '1rem' }}
+        >
+          <span
+            className="inline-block rounded-full border border-gold/40 bg-gold/10 text-sm font-bold text-gold-light"
+        
+          >
+            {tAbout('badge')}
+          </span>
 
+          <h2
+            className="text-3xl font-extrabold text-gold md:text-4xl"
+          >
+            {tAbout('title')}
+          </h2>
+
+          <p className="text-lg leading-9 text-white/80">{tAbout('text')}</p>
+
+          <span
+            className="mx-auto block h-0.5 w-20 rounded-full bg-linear-to-r from-transparent via-gold to-transparent"
+      
+          />
+        </div>
+      </div>
       {/* ================= الجزء الأول: Hero ================= */}
-      <div className="relative flex min-h-[82vh] items-end">
+      <div className="relative flex items-end">
         {/* شريط السوشيال على الجنب (الشاشات الكبيرة) */}
         <div className="absolute end-5 top-1/2 hidden -translate-y-1/2 flex-col gap-3 md:flex">
           {socials}
@@ -172,37 +200,7 @@ export default function HeroAboutSection() {
         </div>
       </div>
 
-      {/* ================= الجزء الثاني: About (مدمج في نفس السكشن) ================= */}
-      <div
-        className="relative border-t border-white/10 bg-navy/40 backdrop-blur-xs"
-        style={{ paddingBlock: '4rem' }}
-      >
-        <div
-          className="w-full max-w-3xl text-center"
-          style={{ marginInline: 'auto', paddingInline: '1rem' }}
-        >
-          <span
-            className="inline-block rounded-full border border-gold/40 bg-gold/10 text-sm font-bold text-gold-light"
-            style={{ padding: '0.25rem 0.9rem', marginBlockEnd: '1rem' }}
-          >
-            {tAbout('badge')}
-          </span>
-
-          <h2
-            className="text-3xl font-extrabold text-gold md:text-4xl"
-            style={{ marginBlockEnd: '1rem' }}
-          >
-            {tAbout('title')}
-          </h2>
-
-          <p className="text-lg leading-9 text-white/80">{tAbout('text')}</p>
-
-          <span
-            className="mx-auto block h-0.5 w-20 rounded-full bg-linear-to-r from-transparent via-gold to-transparent"
-            style={{ marginBlockStart: '2rem' }}
-          />
-        </div>
-      </div>
+      
     </section>
   );
 }

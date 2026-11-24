@@ -188,7 +188,7 @@ export default function AboutPage() {
               style={{ padding: '2.25rem 2rem' }}
             >
               <span
-                className="flex h-14 w-14  justify-center rounded-2xl border border-gold/40 bg-gold/10 text-gold"
+                className="flex items-center h-14 w-14  justify-center rounded-2xl border border-gold/40 bg-gold/10 text-gold"
                 style={{ marginBlockEnd: '1.25rem' }}
               >
                 {k === 'mission'
@@ -239,7 +239,7 @@ export default function AboutPage() {
                 className="group flex flex-col gap-3 rounded-3xl border border-line bg-navy transition duration-300 hover:-translate-y-1.5 hover:border-gold hover:shadow-xl hover:shadow-gold/15"
                 style={{ padding: '2rem 1.75rem' }}
               >
-                <span className="flex h-14 w-14  justify-center rounded-2xl border border-gold/40 bg-gold/10 text-gold transition group-hover:bg-gold group-hover:text-navy">
+                <span className="flex items-center h-14 w-14  justify-center rounded-2xl border border-gold/40 bg-gold/10 text-gold transition group-hover:bg-gold group-hover:text-navy">
                   {s.svg}
                 </span>
                 <h3 className="text-xl font-bold text-white transition-colors group-hover:text-gold-light">
@@ -286,7 +286,7 @@ export default function AboutPage() {
                 className="flex gap-4 rounded-2xl border border-line bg-navy-light transition duration-300 hover:border-gold"
                 style={{ padding: '1.5rem' }}
               >
-                <span className="flex h-12 w-12 shrink-0  justify-center rounded-xl bg-gold/10 text-gold">
+                <span className="flex items-center h-12 w-12 shrink-0  justify-center rounded-xl bg-gold/10 text-gold">
                   {w.svg}
                 </span>
                 <div className="flex flex-col gap-1.5">

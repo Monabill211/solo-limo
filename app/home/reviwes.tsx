@@ -20,7 +20,11 @@ export default function ReviewsSection() {
   const loop = [...ITEMS, ...ITEMS];
 
   return (
-<section style={{ paddingBlock: '4.5rem' }} className="w-full max-w-full overflow-hidden">      <style>{`
+<section 
+style={{ paddingBlock: '4.5rem' }}
+      className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
+ >    
+   <style>{`
         @keyframes reviews-scroll {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }

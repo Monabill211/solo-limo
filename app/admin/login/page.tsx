@@ -63,16 +63,26 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // لازم يكون أدمن
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', data.user.id)
       .maybeSingle();
 
+    if (profileError) {
+      await supabase.auth.signOut();
+      setError('مشكلة في قراءة الحساب: ' + profileError.message);
+      setLoading(false);
+      return;
+    }
+
     if (profile?.role !== 'admin') {
       await supabase.auth.signOut();
-      setError('الحساب ده مش مسموح له بدخول لوحة التحكم.');
+      setError(
+        profile
+          ? 'الحساب ده مش أدمن.'
+          : 'مفيش صف للحساب ده في جدول profiles (أو السياسات بتمنع قراءته).'
+      );
       setLoading(false);
       return;
     }

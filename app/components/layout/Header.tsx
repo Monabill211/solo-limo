@@ -103,7 +103,7 @@ export default function Header() {
         style={{ paddingBlock: '0.75rem' }}
       >
         <div
-          className="flex w-full max-w-6xl  justify-between gap-4"
+          className="flex items-center w-full max-w-6xl justify-between gap-4"
           style={{ marginInline: 'auto', paddingInline: '1rem' }}
         >
           <Link href="/" aria-label={brand('name')}>
@@ -113,21 +113,6 @@ export default function Header() {
           <div className="flex flex-wrap  justify-end gap-3">
             <CurrencySwitcher />
             <LanguageSwitcher />
-
-            {/* <Link
-              href="/login"
-              className="hidden text-muted transition-colors hover:text-gold-light md:block"
-            >
-              {t('login')}
-            </Link>
-
-            <Link
-              href="/login?mode=signup"
-              style={{ padding: '0.5rem 1.4rem' }}
-              className="rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
-            >
-              {t('signup')}
-            </Link> */}
             <HeaderAuth />
           </div>
         </div>

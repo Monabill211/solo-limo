@@ -8,6 +8,14 @@ import { createClient } from '../../lib/supabase/client';
 
 type Me = { name: string; isAdmin: boolean } | null;
 
+function getClient() {
+  try {
+    return createClient();
+  } catch {
+    return null;
+  }
+}
+
 export default function HeaderAuth() {
   const t = useTranslations('Header');
   const router = useRouter();
@@ -18,39 +26,64 @@ export default function HeaderAuth() {
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const supabase = createClient();
+    let cancelled = false;
+    const supabase = getClient();
+
+    // مفاتيح Supabase ناقصة: اعرض أزرار الدخول عادي
+    if (!supabase) {
+      setMe(null);
+      return;
+    }
+
+    // أمان: لو الطلب علّق لأي سبب، ما نسيبش المربع الرمادي أكتر من 4 ثواني
+    const timer = setTimeout(() => {
+      if (!cancelled) setMe((prev) => (prev === undefined ? null : prev));
+    }, 4000);
 
     async function load() {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+      try {
+        const { data } = await supabase!.auth.getUser();
+        const user = data.user;
 
-      if (!user) {
-        setMe(null);
-        return;
+        if (!user) {
+          if (!cancelled) setMe(null);
+          return;
+        }
+
+        const { data: profile } = await supabase!
+          .from('profiles')
+          .select('full_name, role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const full =
+          profile?.full_name?.trim() ||
+          (user.user_metadata?.full_name as string | undefined)?.trim() ||
+          user.email?.split('@')[0] ||
+          '';
+
+        if (!cancelled) {
+          setMe({
+            name: full.split(' ')[0] || '—',
+            isAdmin: profile?.role === 'admin',
+          });
+        }
+      } catch {
+        if (!cancelled) setMe(null);
       }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      const full =
-        profile?.full_name?.trim() ||
-        (user.user_metadata?.full_name as string | undefined)?.trim() ||
-        user.email?.split('@')[0] ||
-        '';
-
-      setMe({
-        name: full.split(' ')[0],
-        isAdmin: profile?.role === 'admin',
-      });
     }
 
     load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
-    return () => sub.subscription.unsubscribe();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      load();
+    });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   // قفل القائمة لما تدوس برّاها
@@ -70,7 +103,7 @@ export default function HeaderAuth() {
   }, []);
 
   async function logout() {
-    await createClient().auth.signOut();
+    await getClient()?.auth.signOut();
     setOpen(false);
     setMe(null);
     router.refresh();
@@ -87,7 +120,7 @@ export default function HeaderAuth() {
       <>
         <Link
           href="/login"
-          className="hidden text-muted transition-colors hover:text-gold-light md:block"
+          className="hidden text-muted transition-colors hover:text-gold-light md:block flex items-center justify-center gap-2 rounded-xl border border-line bg-navy-light/50 px-3 py-1.5 text-sm font-bold backdrop-blur transition hover:border-gold hover:bg-navy-light/70"
         >
           {t('login')}
         </Link>
@@ -105,7 +138,7 @@ export default function HeaderAuth() {
 
   // مسجّل دخول
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className="relative flex items-center ">
       <button
         type="button"
         aria-expanded={open}

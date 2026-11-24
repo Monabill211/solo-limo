@@ -13,7 +13,10 @@ export default function FaqSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section style={{ paddingBlock: '4rem' }}>
+    <section 
+          className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
+
+    style={{ paddingBlock: '4rem' }}>
       <div
         className="w-full max-w-3xl"
         style={{ marginInline: 'auto', paddingInline: '1rem' }}
@@ -56,7 +59,7 @@ export default function FaqSection() {
                   </span>
 
                   <span
-                    className={`flex h-8 w-8 shrink-0  justify-center rounded-full border border-line transition-all duration-300 ${
+                    className={`flex items-center h-8 w-8 shrink-0  justify-center rounded-full border border-line transition-all duration-300 ${
                       isOpen ? 'rotate-45 bg-gold text-navy' : 'text-gold'
                     }`}
                   >

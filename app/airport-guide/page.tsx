@@ -338,7 +338,6 @@ export default function AirportGuidePage() {
                               className="flex items-start gap-2.5 rounded-xl border border-gold/30 bg-gold/5 text-sm leading-7 text-gold-light"
                               style={{ padding: '0.7rem 0.9rem', marginBlockStart: '0.9rem' }}
                             >
-                              <span aria-hidden>💡</span>
                               {s.tip}
                             </p>
                           )}
@@ -373,12 +372,7 @@ export default function AirportGuidePage() {
                 className="group rounded-3xl border border-line bg-navy transition duration-300 hover:-translate-y-1.5 hover:border-gold hover:shadow-xl hover:shadow-gold/10"
                 style={{ padding: '1.6rem 1.4rem' }}
               >
-                <span
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl border border-gold/40 bg-gold/10 text-xl transition group-hover:bg-gold"
-                  style={{ marginBlockEnd: '1rem' }}
-                >
-                  {t(`tip${n}Icon`)}
-                </span>
+    
                 <h3 className="font-bold text-white" style={{ marginBlockEnd: '0.4rem' }}>
                   {t(`tip${n}Title`)}
                 </h3>

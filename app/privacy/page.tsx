@@ -60,7 +60,6 @@ export default function PrivacyPage() {
             {t('intro')}
           </p>
 
-          <span className="text-sm text-muted">{t('updated')}</span>
         </div>
       </section>
 

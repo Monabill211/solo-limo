@@ -82,13 +82,6 @@ export default function HeroPage() {
       >
         {/* ---------- الكلام ---------- */}
         <div className="max-w-2xl">
-          <span
-            className="inline-flex  gap-2 rounded-full border border-gold/50 bg-black/30 text-sm font-bold text-gold-light backdrop-blur"
-            style={{ padding: '0.35rem 1.1rem', marginBlockEnd: '1.5rem' }}
-          >
-            <span className="h-2 w-2 animate-pulse rounded-full bg-gold" />
-            {t('badge')}
-          </span>
 
           <h1
             className="text-4xl font-extrabold leading-tight text-white md:text-6xl md:leading-tight"
@@ -141,9 +134,9 @@ export default function HeroPage() {
               key={s.key}
               href={s.href}
               style={{ padding: '1.25rem 1.4rem' }}
-              className="group flex  gap-4 rounded-2xl border border-white/15 bg-black/35 backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:border-gold hover:bg-black/50 hover:shadow-xl hover:shadow-gold/20"
+              className="group flex items-center  gap-4 rounded-2xl border border-white/15 bg-black/35 backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:border-gold hover:bg-black/50 hover:shadow-xl hover:shadow-gold/20"
             >
-              <span className="flex h-14 w-14 shrink-0  justify-center rounded-xl border border-gold/40 bg-gold/10 text-gold transition group-hover:bg-gold group-hover:text-navy">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-gold/40 bg-gold/10 text-gold transition group-hover:bg-gold group-hover:text-navy">
                 {s.svg}
               </span>
 
