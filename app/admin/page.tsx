@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { t } from '../components/admin/ar';
+import { connection } from 'next/server';
 
 // ⚠️ كل الأرقام والحجوزات هنا بيانات تجريبية لحد ما نربط Supabase
 const STATS = [
@@ -84,7 +85,10 @@ const money = (n: number) =>
   new Intl.NumberFormat(LOC, { style: 'currency', currency: 'EGP', maximumFractionDigits: 0 }).format(n);
 const num = (n: number) => new Intl.NumberFormat(LOC).format(n);
 
-export default function AdminHome() {
+export default async function AdminPage() {
+  await connection();
+
+  // باقي الكود بتاعك زي ما هو...
   const today = new Intl.DateTimeFormat(LOC, {
     weekday: 'long',
     day: 'numeric',
