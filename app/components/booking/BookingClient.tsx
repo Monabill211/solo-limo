@@ -250,6 +250,9 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
   const canSubmit = loggedIn && days > 0 && name.trim().length >= 2 && phone.replace(/\D/g, '').length >= 8;
   const itemName = item ? (isAr ? item.name_ar : item.name_en) : '';
   const backHref = isCar ? '/cars' : '/apartments';
+  const returnTo = `/booking?type=${type}&id=${id}`;
+  const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
+  const signupHref = `/login?mode=signup&next=${encodeURIComponent(returnTo)}`;
 
   /* ---------- الحالات الخاصة ---------- */
   if (loading) {
@@ -469,8 +472,8 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 text-center" style={{ padding: '0.9rem', marginBlockEnd: '1rem' }}>
               <p className="text-sm text-amber-300" style={{ marginBlockEnd: '0.6rem' }}>{t('loginText')}</p>
               <div className="flex justify-center gap-2">
-                <Link href="/login" style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg bg-gold text-sm font-bold text-navy">{t('loginBtn')}</Link>
-                <Link href="/login?mode=signup" style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg border border-gold text-sm font-bold text-gold">{t('signupBtn')}</Link>
+                <Link href={loginHref} style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg bg-gold text-sm font-bold text-navy">{t('loginBtn')}</Link>
+                <Link href={signupHref} style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg border border-gold text-sm font-bold text-gold">{t('signupBtn')}</Link>
               </div>
             </div>
           )}

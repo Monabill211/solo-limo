@@ -248,6 +248,9 @@ export default function AirportBooking({ id }: { id: string }) {
     phone.replace(/\D/g, '').length >= 8;
 
   const serviceName = service ? (isAr ? service.name_ar : service.name_en) : '';
+  const returnTo = `/booking?type=airport&id=${id}`;
+  const loginHref = `/login?next=${encodeURIComponent(returnTo)}`;
+  const signupHref = `/login?mode=signup&next=${encodeURIComponent(returnTo)}`;
 
   if (loading) {
     return (
@@ -471,8 +474,8 @@ export default function AirportBooking({ id }: { id: string }) {
             <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 text-center" style={{ padding: '0.9rem', marginBlockEnd: '1rem' }}>
               <p className="text-sm text-amber-300" style={{ marginBlockEnd: '0.6rem' }}>{b('loginText')}</p>
               <div className="flex justify-center gap-2">
-                <Link href="/login" style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg bg-gold text-sm font-bold text-navy">{b('loginBtn')}</Link>
-                <Link href="/login?mode=signup" style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg border border-gold text-sm font-bold text-gold">{b('signupBtn')}</Link>
+                <Link href={loginHref} style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg bg-gold text-sm font-bold text-navy">{b('loginBtn')}</Link>
+                <Link href={signupHref} style={{ padding: '0.4rem 1.1rem' }} className="rounded-lg border border-gold text-sm font-bold text-gold">{b('signupBtn')}</Link>
               </div>
             </div>
           )}

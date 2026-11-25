@@ -99,6 +99,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [mode, setMode] = useState<Mode>('login');
+  const [nextPath, setNextPath] = useState('/');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -113,8 +114,12 @@ export default function LoginPage() {
 
   // /login?mode=signup بيفتح إنشاء الحساب على طول
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
-      setMode('signup');
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'signup') setMode('signup');
+
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\')) {
+      setNextPath(next);
     }
   }, []);
 
@@ -160,7 +165,7 @@ export default function LoginPage() {
       }
     }
 
-    router.push('/');
+    router.push(nextPath);
     router.refresh();
   }
 
