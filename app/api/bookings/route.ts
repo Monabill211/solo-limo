@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/app/lib/auth-server';
 import { serviceClient } from '@/app/lib/admin-server';
+import { getUsdRate } from '@/app/lib/settings';
 import { computeTotals, discountProblem, type Currency } from '@/app/lib/pricing';
-import { diffDays, isISO, todayISO } from '@/app/lib/dates';
+import { addDays, diffDays, isISO, todayISO } from '@/app/lib/dates';
 import { createCheckout, paymobEnabled } from '@/app/lib/paymob';
 
 const UUID = /^[0-9a-f-]{36}$/i;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
+
+const TABLE = { car: 'cars', apartment: 'apartments', airport: 'airport_services' } as const;
+const COST_COLUMN = { car: 'car_id', apartment: 'apartment_id', airport: 'airport_service_id' } as const;
 
 export async function POST(req: Request) {
   const user = await getAuthUser();
@@ -19,21 +24,46 @@ export async function POST(req: Request) {
     return fail('bad_request');
   }
 
-  const type = body.type === 'car' || body.type === 'apartment' ? body.type : null;
+  const type: 'car' | 'apartment' | 'airport' | null =
+    body.type === 'car' || body.type === 'apartment' || body.type === 'airport' ? body.type : null;
   const currency: Currency | null =
     body.currency === 'EGP' || body.currency === 'USD' ? body.currency : null;
 
   if (!type || !currency || typeof body.itemId !== 'string' || !UUID.test(body.itemId))
     return fail('bad_request');
-  if (!isISO(body.start) || !isISO(body.end)) return fail('bad_dates');
+  if (!isISO(body.start)) return fail('bad_dates');
 
   const name = String(body.name ?? '').trim().slice(0, 120);
   const phone = String(body.phone ?? '').trim().slice(0, 30);
   const notes = String(body.notes ?? '').trim().slice(0, 500);
   if (name.length < 2 || phone.replace(/\D/g, '').length < 8) return fail('bad_contact');
 
-  const days = diffDays(body.start, body.end);
-  if (days < 1 || days > 90) return fail('bad_dates');
+  const isAirport = type === 'airport';
+  let endDate: string;
+  let days: number;
+  let flight: string | null = null;
+  let time: string | null = null;
+  let passengers: number | null = null;
+
+  if (isAirport) {
+    // خدمة المطار: يوم واحد، والتاريخ هو يوم الخدمة
+    endDate = addDays(body.start, 1);
+    days = 1;
+
+    flight = String(body.flight ?? '').trim().slice(0, 20);
+    time = String(body.time ?? '').trim();
+    passengers = Number(body.passengers);
+
+    if (flight.length < 2) return fail('bad_flight');
+    if (!TIME.test(time)) return fail('bad_time');
+    if (!Number.isInteger(passengers) || passengers < 1 || passengers > 20) return fail('bad_passengers');
+  } else {
+    if (!isISO(body.end)) return fail('bad_dates');
+    endDate = body.end;
+    days = diffDays(body.start, body.end);
+    if (days < 1 || days > 90) return fail('bad_dates');
+  }
+
   if (body.start < todayISO()) return fail('past_date');
 
   const extraIds: string[] = Array.from(
@@ -48,7 +78,7 @@ export async function POST(req: Request) {
 
   // ---------- العنصر (السعر بيتقرا من الداتابيز مش من المتصفح) ----------
   const { data: item } = await admin
-    .from(type === 'car' ? 'cars' : 'apartments')
+    .from(TABLE[type])
     .select('id, name_ar, price_egp, price_usd, active')
     .eq('id', body.itemId)
     .maybeSingle();
@@ -72,7 +102,7 @@ export async function POST(req: Request) {
   const itemCost = await admin
     .from('costs')
     .select('cost_egp')
-    .eq(type === 'car' ? 'car_id' : 'apartment_id', item.id)
+    .eq(COST_COLUMN[type], item.id)
     .maybeSingle();
   const unitCost = Number(itemCost.data?.cost_egp ?? 0);
 
@@ -96,7 +126,7 @@ export async function POST(req: Request) {
   }
 
   // ---------- الحساب ----------
-  const rate = Number(process.env.USD_EGP_RATE || 50);
+  const rate = await getUsdRate();
   const unit = Number(currency === 'EGP' ? item.price_egp : item.price_usd);
   const price = (e: any) => Number(currency === 'EGP' ? e.price_egp : e.price_usd);
 
@@ -117,8 +147,12 @@ export async function POST(req: Request) {
       booking_type: type,
       car_id: type === 'car' ? item.id : null,
       apartment_id: type === 'apartment' ? item.id : null,
+      airport_service_id: isAirport ? item.id : null,
+      flight_number: flight,
+      service_time: time,
+      passengers,
       start_date: body.start,
-      end_date: body.end,
+      end_date: endDate,
       customer_name: name,
       customer_phone: phone,
       notes: notes || null,

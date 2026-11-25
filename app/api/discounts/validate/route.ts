@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/app/lib/auth-server';
 import { serviceClient } from '@/app/lib/admin-server';
 import { discountProblem } from '@/app/lib/pricing';
-
+import { getUsdRate } from '@/app/lib/settings';
 // للمعاينة بس: الحساب النهائي بيتعمل تاني في /api/bookings
 export async function POST(req: Request) {
   const user = await getAuthUser();
@@ -26,6 +26,5 @@ export async function POST(req: Request) {
     code,
     type: d.type,
     value: Number(d.value),
-    rate: Number(process.env.USD_EGP_RATE || 50),
-  });
+    rate: await getUsdRate(),  });
 }
