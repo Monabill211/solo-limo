@@ -21,12 +21,12 @@ const icon = (path: React.ReactNode, size = 'h-6 w-6') => (
   </svg>
 );
 
-// غيّر الروابط دي لصفحاتك، والرابط الفاضي ('') بيشيل الأيقونة
+// غيّر الروابط دي لصفحاتك، والرابط الفاضي ('') بيخفي الرابط
 const SOCIAL = [
-  { key: 'Facebook', href: 'https://facebook.com/', svg: icon(<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />, 'h-5 w-5') },
-  { key: 'Instagram', href: 'https://instagram.com/', svg: icon(<><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><path d="M17.5 6.5h.01" /></>, 'h-5 w-5') },
-  { key: 'TikTok', href: 'https://tiktok.com/', svg: icon(<><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>, 'h-5 w-5') },
-  { key: 'Telegram', href: 'https://t.me/', svg: icon(<><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>, 'h-5 w-5') },
+  { key: 'Facebook', href: 'https://facebook.com/' },
+  { key: 'Instagram', href: 'https://instagram.com/' },
+  { key: 'TikTok', href: 'https://tiktok.com/' },
+  { key: 'Telegram', href: 'https://t.me/' },
 ].filter((s) => s.href);
 
 const SUBJECTS = ['booking', 'cars', 'apartments', 'airport', 'other'] as const;
@@ -163,9 +163,10 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noreferrer"
                       aria-label={s.key}
-                      className="flex h-12 w-12 items-center justify-center rounded-full border border-line text-gold transition hover:-translate-y-1 hover:border-gold hover:bg-gold hover:text-navy"
+                      style={{ paddingInline: '0.85rem' }}
+                      className="flex min-h-10 items-center justify-center rounded-full border border-line text-sm font-semibold text-gold transition hover:-translate-y-1 hover:border-gold hover:bg-gold hover:text-navy"
                     >
-                      {s.svg}
+                      {s.key}
                     </a>
                   ))}
                 </div>
@@ -262,18 +263,6 @@ export default function ContactPage() {
               className="flex items-center justify-center gap-2 rounded-xl bg-linear-to-br from-gold to-gold-light text-lg font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
             >
               {t('send')}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5 rtl:-scale-x-100"
-              >
-                <path d="m22 2-7 20-4-9-9-4Z" />
-                <path d="M22 2 11 13" />
-              </svg>
             </button>
 
             {sent && (
@@ -304,17 +293,6 @@ export default function ContactPage() {
             </span>
             <span className="flex items-center gap-2 font-bold text-gold">
               {t('faqButton')}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
-              >
-                <path d="m9 6 6 6-6 6" />
-              </svg>
             </span>
           </Link>
         </div>

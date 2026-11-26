@@ -32,20 +32,6 @@ type Row = {
   amenities?: string[] | null;
 };
 
-const ic = (path: React.ReactNode, size = 'h-5 w-5') => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={size}
-  >
-    {path}
-  </svg>
-);
-
 export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
   const t = useTranslations('Details');
   const am = useTranslations('ApartmentsPage');
@@ -154,8 +140,8 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
   const bookHref = `/booking?type=${type}&id=${row.id}`;
   const waText = encodeURIComponent(`${t('waMessage')} ${name}`);
 
-  const arrow =
-    'absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-xl text-white backdrop-blur transition hover:bg-gold hover:text-navy';
+  const galleryButton =
+    'absolute top-1/2 flex min-h-10 -translate-y-1/2 items-center justify-center rounded-lg border border-line bg-navy/85 text-xs font-bold text-white backdrop-blur transition hover:bg-gold hover:text-navy';
 
   return (
     <div className="w-full max-w-6xl" style={{ marginInline: 'auto', padding: '2.5rem 1rem 4rem' }}>
@@ -164,7 +150,7 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
         className="inline-block text-sm font-bold text-gold-light hover:underline"
         style={{ marginBlockEnd: '1.5rem' }}
       >
-        ← {backLabel}
+        {backLabel}
       </Link>
 
       <div className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -179,34 +165,16 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
                 className="h-full w-full animate-[fadeIn_0.4s_ease-out] object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#1c2943] to-navy text-gold/60">
-                {isCar
-                  ? ic(
-                      <>
-                        <path d="M3 15l1.6-5.2A2 2 0 0 1 6.5 8.4h11a2 2 0 0 1 1.9 1.4L21 15" />
-                        <rect x="3" y="15" width="18" height="4" rx="1" />
-                        <circle cx="7" cy="17" r="0.6" />
-                        <circle cx="17" cy="17" r="0.6" />
-                      </>,
-                      'h-20 w-20'
-                    )
-                  : ic(
-                      <>
-                        <rect x="5" y="3" width="14" height="18" rx="1" />
-                        <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2" />
-                      </>,
-                      'h-20 w-20'
-                    )}
-              </div>
+              <div aria-hidden="true" className="h-full w-full bg-linear-to-br from-navy-light to-navy" />
             )}
 
             {count > 1 && (
               <>
-                <button type="button" onClick={() => go(-1)} aria-label={t('prev')} className={`${arrow} start-3`}>
-                  <span className="rtl:rotate-180">‹</span>
+                <button type="button" onClick={() => go(-1)} aria-label={t('prev')} className={`${galleryButton} start-3`} style={{ paddingInline: '0.65rem' }}>
+                  {t('prev')}
                 </button>
-                <button type="button" onClick={() => go(1)} aria-label={t('next')} className={`${arrow} end-3`}>
-                  <span className="rtl:rotate-180">›</span>
+                <button type="button" onClick={() => go(1)} aria-label={t('next')} className={`${galleryButton} end-3`} style={{ paddingInline: '0.65rem' }}>
+                  {t('next')}
                 </button>
                 <span
                   className="absolute bottom-3 end-3 rounded-full bg-black/55 text-xs font-bold text-white backdrop-blur"
@@ -257,7 +225,7 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
                       className="flex items-center gap-2 rounded-full border border-line bg-navy-light text-sm font-bold text-white/90"
                       style={{ padding: '0.4rem 1rem' }}
                     >
-                      <span className="text-gold">✓</span>
+                      <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" />
                       {amenityLabel(k)}
                     </span>
                   ))}
@@ -279,13 +247,6 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
             <h1 className="text-3xl font-extrabold leading-snug text-white md:text-4xl">{name}</h1>
             {!isCar && location && (
               <p className="flex items-center gap-1.5 text-muted" style={{ marginBlockStart: '0.5rem' }}>
-                {ic(
-                  <>
-                    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </>,
-                  'h-4 w-4'
-                )}
                 {location}
               </p>
             )}
@@ -337,7 +298,7 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
             <ul className="flex flex-col gap-2 text-sm text-muted" style={{ marginBlockStart: '1.25rem' }}>
               {[t('trust1'), t('trust2'), t('trust3')].map((x) => (
                 <li key={x} className="flex items-center gap-2">
-                  <span className="text-gold">✓</span> {x}
+                  <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" /> {x}
                 </li>
               ))}
             </ul>

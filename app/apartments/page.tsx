@@ -32,71 +32,18 @@ const ROOMS: RoomsFilter[] = ['all', 'r1', 'r2', 'r3'];
 const badgeClass =
   'inline-block rounded-full border border-gold/40 bg-gold/10 text-sm font-bold text-gold-light';
 
-const ic = (path: React.ReactNode, size = 'h-5 w-5') => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={size}
-  >
-    {path}
-  </svg>
-);
-
-const buildingIcon = (size: string) =>
-  ic(
-    <>
-      <rect x="5" y="3" width="14" height="18" rx="1" />
-      <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2" />
-    </>,
-    size
-  );
-
-const pinIcon = ic(
-  <>
-    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </>,
-  'h-4 w-4'
-);
-
 const HIGHLIGHTS = [
   {
     key: 'hl1',
-    svg: ic(
-      <>
-        <rect x="5" y="3" width="14" height="18" rx="1" />
-        <path d="M9 7h2M13 7h2M9 11h2M13 11h2" />
-      </>,
-      'h-6 w-6'
-    ),
   },
   {
     key: 'hl2',
-    svg: ic(
-      <>
-        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-        <path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" />
-      </>,
-      'h-6 w-6'
-    ),
   },
   {
     key: 'hl3',
-    svg: ic(
-      <>
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M2 10h20" />
-      </>,
-      'h-6 w-6'
-    ),
   },
   {
     key: 'hl4',
-    svg: ic(<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />, 'h-6 w-6'),
   },
 ] as const;
 
@@ -235,9 +182,6 @@ export default function ApartmentsPage() {
               className="flex items-center gap-3 rounded-2xl border border-line bg-navy-light"
               style={{ padding: '0.9rem 1rem' }}
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold/10 text-gold">
-                {h.svg}
-              </span>
               <span className="text-sm font-bold leading-6 text-white/90">{t(h.key)}</span>
             </div>
           ))}
@@ -256,24 +200,12 @@ export default function ApartmentsPage() {
           >
             <div className="flex flex-col gap-3 md:flex-row">
               <label className="relative block flex-1">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gold"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('searchPlaceholder')}
-                  style={{ padding: '0.8rem 1rem 0.8rem 3rem' }}
+                  style={{ padding: '0.8rem 1rem' }}
                   className="w-full rounded-xl border border-line bg-navy text-white placeholder:text-muted focus:border-gold focus:outline-none"
                 />
               </label>
@@ -374,7 +306,6 @@ export default function ApartmentsPage() {
               className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
               style={{ padding: '4rem 1.5rem' }}
             >
-              <span className="text-gold">{buildingIcon('h-14 w-14')}</span>
               <p className="text-xl font-bold text-white">{t('emptyTitle')}</p>
               <p className="text-muted">{t('emptyText')}</p>
             </div>
@@ -419,9 +350,7 @@ export default function ApartmentsPage() {
                           className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#1c2943] to-navy text-gold/60">
-                          {buildingIcon('h-16 w-16')}
-                        </div>
+                        <div aria-hidden="true" className="h-full w-full bg-linear-to-br from-navy-light to-navy" />
                       )}
 
                       <div className="absolute inset-0 bg-linear-to-t from-navy-light/70 via-transparent to-transparent" />
@@ -431,7 +360,6 @@ export default function ApartmentsPage() {
                           className="absolute start-3 top-3 flex items-center gap-1.5 rounded-full bg-black/55 text-xs font-bold text-gold-light backdrop-blur"
                           style={{ padding: '0.25rem 0.8rem' }}
                         >
-                          {pinIcon}
                           {location}
                         </span>
                       )}
@@ -508,17 +436,6 @@ export default function ApartmentsPage() {
                           style={{ padding: '0.55rem 1.1rem' }}
                         >
                           {t('viewBook')}
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
-                          >
-                            <path d="m9 6 6 6-6 6" />
-                          </svg>
                         </span>
                       </div>
                     </div>

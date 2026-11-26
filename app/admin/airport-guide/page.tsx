@@ -1,5 +1,7 @@
 'use client';
 
+import AirportServices from './AirportServices';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 
@@ -63,7 +65,6 @@ const PAY_LABEL: Record<string, string> = {
   refunded: 'مستردة',
 };
 
-const KIND_ICON: Record<Kind, string> = { car: '🚗', apartment: '🏢', airport: '✈️' };
 const KIND_LABEL: Record<Kind, string> = { car: 'سيارة', apartment: 'شقة', airport: 'خدمة مطار' };
 
 const one = <T,>(x: T | T[] | null | undefined): T | null =>
@@ -181,7 +182,7 @@ export default function AdminBookingsPage() {
     setBusyId(b.id);
     setActionError('');
 
-    const { error: err } = await createClient().from('bookings').update({ status: next }).eq('id', b.id);
+    const { error: err } = await createClient().from('bookings').update({ status: next }).eq('id', b.id).select('id').single();
 
     if (err) {
       const msg =
@@ -191,12 +192,12 @@ export default function AdminBookingsPage() {
             ? 'الحساب ده ملوش صلاحية التعديل.'
             : err.message;
       setActionError(msg);
-      showToast('فشل تغيير الحالة');
+      showToast(err.message);
     } else {
       setItems((p) => p.map((x) => (x.id === b.id ? { ...x, status: next } : x)));
       setConfirm(null);
       showToast(
-        next === 'paid' ? 'تم تأكيد الدفع ✓' : next === 'cancelled' ? 'تم إلغاء الحجز' : 'رجع الحجز معلّق'
+        next === 'paid' ? 'تم تأكيد الدفع' : next === 'cancelled' ? 'تم إلغاء الحجز' : 'رجع الحجز معلّق'
       );
     }
     setBusyId(null);
@@ -206,7 +207,7 @@ export default function AdminBookingsPage() {
     setBusyId(b.id);
     setActionError('');
 
-    const { error: err } = await createClient().from('bookings').delete().eq('id', b.id);
+    const { error: err } = await createClient().from('bookings').delete().eq('id', b.id).select('id').single();
 
     if (err) {
       setActionError(err.message);
@@ -253,7 +254,7 @@ export default function AdminBookingsPage() {
     setSelectedId(b.id);
   };
 
-  const Badge = ({ s }: { s: Status }) => (
+  const renderBadge = ({ s }: { s: Status }) => (
     <span
       className={`rounded-full border text-xs font-bold ${STATUS_STYLE[s]}`}
       style={{ padding: '0.25rem 0.8rem' }}
@@ -262,7 +263,7 @@ export default function AdminBookingsPage() {
     </span>
   );
 
-  const Dates = ({ b }: { b: Booking }) =>
+  const renderDates = ({ b }: { b: Booking }) =>
     b.booking_type === 'airport' ? (
       <>
         <p className="text-sm text-white">{dateAr(b.start_date)}</p>
@@ -273,13 +274,13 @@ export default function AdminBookingsPage() {
     ) : (
       <>
         <p className="text-sm text-white">
-          {dateAr(b.start_date)} ← {dateAr(b.end_date)}
+          {dateAr(b.start_date)} – {dateAr(b.end_date)}
         </p>
         <p className="text-xs text-muted">{durationText(b)}</p>
       </>
     );
 
-  const RowActions = ({ b }: { b: Booking }) => (
+  const renderRowActions = ({ b }: { b: Booking }) => (
     <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
@@ -305,10 +306,11 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <AirportServices />
       {/* ---------- العنوان ---------- */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-white md:text-3xl">الحجوزات</h1>
+          <h2 className="text-2xl font-extrabold text-white md:text-3xl">الحجوزات</h2>
           <p className="text-muted" style={{ marginBlockStart: '0.25rem' }}>
             تابع حجوزات السيارات والشقق وخدمات المطار، أكّد الدفع، وشوف الأرباح.
           </p>
@@ -321,7 +323,7 @@ export default function AdminBookingsPage() {
           style={{ padding: '0.65rem 1.3rem' }}
           className="rounded-xl border border-gold/50 font-bold text-gold transition hover:bg-gold hover:text-navy disabled:opacity-50"
         >
-          {loading ? 'جاري التحديث...' : '↻ تحديث'}
+          {loading ? 'جاري التحديث...' : 'تحديث'}
         </button>
       </div>
 
@@ -386,9 +388,9 @@ export default function AdminBookingsPage() {
           {(
             [
               ['all', 'كل الأنواع'],
-              ['car', '🚗 سيارات'],
-              ['apartment', '🏢 شقق'],
-              ['airport', '✈️ مطار'],
+              ['car', 'سيارات'],
+              ['apartment', 'شقق'],
+              ['airport', 'مطار'],
             ] as const
           ).map(([k, label]) => (
             <button
@@ -430,7 +432,6 @@ export default function AdminBookingsPage() {
           className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
           style={{ padding: '3.5rem 1.5rem' }}
         >
-          <span className="text-5xl">📅</span>
           <p className="text-xl font-bold text-white">
             {items.length === 0 ? 'لسه مفيش حجوزات' : 'مفيش نتائج للبحث'}
           </p>
@@ -469,21 +470,21 @@ export default function AdminBookingsPage() {
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }}>
                       <p className="max-w-48 truncate text-white">
-                        {KIND_ICON[b.booking_type]} {b.item_name}
+                        {b.item_name}
                       </p>
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }}>
-                      <Dates b={b} />
+                      {renderDates({ b: b })}
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }}>
                       <p className="font-bold text-white">{money(b.total, b.currency)}</p>
                       {b.currency === 'USD' && <p className="text-xs text-muted">≈ {money(b.total_egp)}</p>}
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }}>
-                      <Badge s={b.status} />
+                      {renderBadge({ s: b.status })}
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }}>
-                      <RowActions b={b} />
+                      {renderRowActions({ b: b })}
                     </td>
                   </tr>
                 ))}
@@ -503,7 +504,7 @@ export default function AdminBookingsPage() {
                   <span dir="ltr" className="font-bold text-gold-light">
                     {ref(b.id)}
                   </span>
-                  <Badge s={b.status} />
+                  {renderBadge({ s: b.status })}
                 </div>
 
                 <div>
@@ -514,17 +515,17 @@ export default function AdminBookingsPage() {
                 </div>
 
                 <p className="truncate text-white">
-                  {KIND_ICON[b.booking_type]} {b.item_name}
+                  {b.item_name}
                 </p>
 
                 <div className="flex items-end justify-between gap-2">
                   <div>
-                    <Dates b={b} />
+                    {renderDates({ b: b })}
                   </div>
                   <p className="text-lg font-extrabold text-gold-light">{money(b.total, b.currency)}</p>
                 </div>
 
-                <RowActions b={b} />
+                {renderRowActions({ b: b })}
               </div>
             ))}
           </div>
@@ -548,7 +549,7 @@ export default function AdminBookingsPage() {
                     {ref(selected.id)}
                   </span>
                 </h2>
-                <Badge s={selected.status} />
+                {renderBadge({ s: selected.status })}
               </div>
               <button
                 type="button"
@@ -565,7 +566,7 @@ export default function AdminBookingsPage() {
               <section className="rounded-2xl border border-line bg-navy/50" style={{ padding: '1rem 1.1rem' }}>
                 <p className="text-xs text-muted">{KIND_LABEL[selected.booking_type]}</p>
                 <p className="text-lg font-bold text-white">
-                  {KIND_ICON[selected.booking_type]} {selected.item_name}
+                  {selected.item_name}
                 </p>
 
                 {selected.booking_type === 'airport' ? (

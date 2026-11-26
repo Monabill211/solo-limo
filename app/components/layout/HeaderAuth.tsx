@@ -3,194 +3,151 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
+import type { User } from '@supabase/supabase-js';
 import { createClient } from '../../lib/supabase/client';
 
-type Me = { name: string; isAdmin: boolean } | null;
-
-function getClient() {
-  try {
-    return createClient();
-  } catch {
-    return null;
-  }
-}
-
 export default function HeaderAuth() {
-  const t = useTranslations('Header');
   const router = useRouter();
-
-  // undefined = لسه بنتأكد، null = مش مسجّل دخول
-  const [me, setMe] = useState<Me | undefined>(undefined);
+  const ar = useLocale() === 'ar';
+  const [supabase] = useState(() => createClient());
+  const [ready, setReady] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [open, setOpen] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const loadedFor = useRef<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    const supabase = getClient();
+    let alive = true;
 
-    // مفاتيح Supabase ناقصة: اعرض أزرار الدخول عادي
-    if (!supabase) {
-      setMe(null);
-      return;
-    }
-
-    // أمان: لو الطلب علّق لأي سبب، ما نسيبش المربع الرمادي أكتر من 4 ثواني
-    const timer = setTimeout(() => {
-      if (!cancelled) setMe((prev) => (prev === undefined ? null : prev));
-    }, 4000);
-
-    async function load() {
+    async function loadProfile(u: User) {
+      if (loadedFor.current === u.id) return;
+      loadedFor.current = u.id;
+      const fallback =
+        (u.user_metadata?.full_name as string) || u.email?.split('@')[0] || '';
+      setName(fallback);
       try {
-        const { data } = await supabase!.auth.getUser();
-        const user = data.user;
-
-        if (!user) {
-          if (!cancelled) setMe(null);
-          return;
-        }
-
-        const { data: profile } = await supabase!
+        const { data } = await supabase
           .from('profiles')
           .select('full_name, role')
-          .eq('id', user.id)
+          .eq('id', u.id)
           .maybeSingle();
-
-        const full =
-          profile?.full_name?.trim() ||
-          (user.user_metadata?.full_name as string | undefined)?.trim() ||
-          user.email?.split('@')[0] ||
-          '';
-
-        if (!cancelled) {
-          setMe({
-            name: full.split(' ')[0] || '—',
-            isAdmin: profile?.role === 'admin',
-          });
-        }
+        if (!alive) return;
+        if (data?.full_name) setName(data.full_name);
+        setIsAdmin(data?.role === 'admin');
       } catch {
-        if (!cancelled) setMe(null);
+        loadedFor.current = null;
       }
     }
 
-    load();
+    supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
+      const u = data.session?.user ?? null;
+      setUser(u);
+      setReady(true);
+      if (u) loadProfile(u);
+    });
 
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      load();
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!alive) return;
+      if (event === 'SIGNED_OUT') {
+        loadedFor.current = null;
+        setUser(null);
+        setName('');
+        setIsAdmin(false);
+        return;
+      }
+      if (!session?.user) return;
+      setUser(session.user);
+      setReady(true);
+      if (event === 'TOKEN_REFRESHED') return;
+      setTimeout(() => {
+        if (alive && session.user) loadProfile(session.user);
+      }, 0);
     });
 
     return () => {
-      cancelled = true;
-      clearTimeout(timer);
+      alive = false;
       sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  // قفل القائمة لما تدوس برّاها
   useEffect(() => {
-    const onDown = (e: MouseEvent | TouchEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('touchstart', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('touchstart', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    function onClick(e: MouseEvent) {
+      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
   async function logout() {
-    await getClient()?.auth.signOut();
+    await supabase.auth.signOut();
     setOpen(false);
-    setMe(null);
+    router.push('/');
     router.refresh();
   }
 
-  // لسه بنتأكد: مكان فاضي بنفس الحجم عشان الهيدر ما يتنططش
-  if (me === undefined) {
-    return <div className="h-10 w-28 animate-pulse rounded-xl bg-white/5" />;
-  }
+  if (!ready) return <div style={{ width: 90, height: 36 }} />;
 
-  // مش مسجّل دخول
-  if (me === null) {
+  if (!user) {
     return (
-      <>
-        <Link
-          href="/login"
-          className="hidden text-muted transition-colors hover:text-gold-light md:block flex items-center justify-center gap-2 rounded-xl border border-line bg-navy-light/50 px-3 py-1.5 text-sm font-bold backdrop-blur transition hover:border-gold hover:bg-navy-light/70"
-        >
-          {t('login')}
-        </Link>
-
-        <Link
-          href="/login?mode=signup"
-          style={{ padding: '0.5rem 1.4rem' }}
-          className="rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
-        >
-          {t('signup')}
-        </Link>
-      </>
+      <Link
+        href="/login"
+        className="rounded-lg border border-gold text-gold text-sm font-semibold hover:bg-gold hover:text-navy transition"
+        style={{ padding: '8px 16px' }}
+      >
+        {ar ? 'تسجيل الدخول' : 'Login'}
+      </Link>
     );
   }
 
-  // مسجّل دخول
   return (
-    <div ref={boxRef} className="relative flex items-center ">
+    <div ref={box} className="relative">
       <button
         type="button"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        style={{ padding: '0.3rem 0.8rem 0.3rem 0.4rem' }}
-        className="flex items-center gap-2.5 rounded-xl border border-line transition hover:border-gold"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-lg border border-line text-gold text-sm font-semibold hover:border-gold transition"
+        style={{ padding: '8px 14px' }}
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-gold to-gold-light font-extrabold text-navy">
-          {me.name.charAt(0).toUpperCase()}
-        </span>
-
-        <span className="max-w-28 truncate text-sm font-bold text-white sm:max-w-40">
-          {t('hello', { name: me.name })}
-        </span>
-
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`h-4 w-4 shrink-0 text-gold transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
+        <span>{ar ? `مرحباً، ${name}` : `Hello, ${name}`}</span>
+        <span style={{ fontSize: 10 }}>▾</span>
       </button>
 
-      <div
-        className={`${open ? 'flex' : 'hidden'} absolute end-0 top-full z-50 min-w-52 flex-col overflow-hidden rounded-xl border border-line bg-navy-light shadow-xl shadow-black/40`}
-        style={{ marginBlockStart: '0.5rem' }}
-      >
-        {me.isAdmin && (
-          <Link
-            href="/admin"
-            onClick={() => setOpen(false)}
-            style={{ padding: '0.7rem 1.1rem' }}
-            className="font-bold text-gold-light transition-colors hover:bg-navy"
-          >
-            {t('adminPanel')}
-          </Link>
-        )}
-
-        <button
-          type="button"
-          onClick={logout}
-          style={{ padding: '0.7rem 1.1rem' }}
-          className="text-start font-bold text-white transition-colors hover:bg-navy hover:text-red-300"
+      {open && (
+        <div
+          className="absolute end-0 top-full z-50 min-w-48 rounded-xl border border-line bg-navy-light shadow-xl"
+          style={{ marginTop: 8, padding: 6 }}
         >
-          {t('logout')}
-        </button>
-      </div>
+          <Link
+            href="/account"
+            onClick={() => setOpen(false)}
+            className="block rounded-lg text-sm text-white hover:bg-navy hover:text-gold transition"
+            style={{ padding: '10px 12px' }}
+          >
+            {ar ? 'حسابي' : 'My account'}
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="block rounded-lg text-sm text-white hover:bg-navy hover:text-gold transition"
+              style={{ padding: '10px 12px' }}
+            >
+              {ar ? 'لوحة التحكم' : 'Admin panel'}
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={logout}
+            className="block w-full text-start rounded-lg text-sm text-red-400 hover:bg-navy transition"
+            style={{ padding: '10px 12px' }}
+          >
+            {ar ? 'تسجيل الخروج' : 'Logout'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

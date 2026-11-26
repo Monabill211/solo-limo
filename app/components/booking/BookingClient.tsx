@@ -61,6 +61,7 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
   const isCar = type === 'car';
 
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [item, setItem] = useState<Item | null>(null);
   const [extras, setExtras] = useState<Extra[]>([]);
@@ -90,7 +91,7 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
     (async () => {
       const supabase = createClient();
 
-      const { data: it } = await supabase
+      const { data: it, error: itemError } = await supabase
         .from(isCar ? 'cars' : 'apartments')
         .select('id, name_ar, name_en, images, price_egp, price_usd')
         .eq('id', id)
@@ -98,6 +99,11 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
         .maybeSingle();
 
       if (!alive) return;
+      if (itemError) {
+        setLoadFailed(true);
+        setLoading(false);
+        return;
+      }
       if (!it) {
         setNotFound(true);
         setLoading(false);
@@ -112,6 +118,11 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
       ]);
 
       if (!alive) return;
+      if (ex.error || busyRes.error) {
+        setLoadFailed(true);
+        setLoading(false);
+        return;
+      }
 
       setExtras(
         ((ex.data ?? []) as any[])
@@ -263,6 +274,17 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
     );
   }
 
+  if (loadFailed) {
+    return (
+      <div className="mx-auto w-full max-w-lg px-5 py-16 text-center">
+        <p role="alert" className="mb-4 text-red-300">{t('bookingLoadFailed')}</p>
+        <button type="button" className="rounded-xl bg-gold px-5 py-2 font-bold text-navy" onClick={() => window.location.reload()}>
+          {t('bookingRetry')}
+        </button>
+      </div>
+    );
+  }
+
   if (notFound || !item) {
     return (
       <div className="text-center" style={{ padding: '5rem 1rem' }}>
@@ -315,7 +337,7 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
   return (
     <div className="w-full max-w-6xl" style={{ marginInline: 'auto', padding: '2.5rem 1rem 4rem' }}>
       <Link href={backHref} className="inline-block text-sm font-bold text-gold-light hover:underline" style={{ marginBlockEnd: '1.25rem' }}>
-        ← {isCar ? t('backCars') : t('backApartments')}
+        {isCar ? t('backCars') : t('backApartments')}
       </Link>
 
       <div className="flex flex-wrap items-center gap-4" style={{ marginBlockEnd: '2rem' }}>
@@ -370,7 +392,6 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
                       style={{ padding: '0.9rem 1rem' }}
                       className={`flex items-center gap-3 rounded-2xl border text-start transition ${on ? 'border-gold bg-gold/10' : 'border-line bg-navy hover:border-gold/60'}`}
                     >
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${on ? 'border-gold bg-gold text-navy' : 'border-line text-transparent'}`}>✓</span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-bold text-white">{isAr ? e.name_ar : e.name_en}</span>
                         <span className="text-sm text-gold-light">

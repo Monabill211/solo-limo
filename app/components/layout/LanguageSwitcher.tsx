@@ -3,13 +3,17 @@
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
+function storeLocale(locale: 'ar' | 'en') {
+  document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+}
+
 export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
 
   function change(next: 'ar' | 'en') {
     if (next === locale) return;
-    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000`;
+    storeLocale(next);
     router.refresh();
   }
 
@@ -25,6 +29,7 @@ export default function LanguageSwitcher() {
         <button
           key={l.code}
           type="button"
+          aria-pressed={locale === l.code}
           onClick={() => change(l.code)}
           style={{ padding: '0.25rem 0.7rem' }}
           className={`rounded-lg transition-colors ${

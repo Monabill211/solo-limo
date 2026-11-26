@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { createClient } from '@/app/lib/supabase/client';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 
-const WHATSAPP_URL = 'https://wa.me/201044443195';
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '201044443195';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 type Service = {
   id: string;
-  icon: string;
   name_ar: string;
   name_en: string;
   description_ar: string | null;
@@ -19,54 +19,75 @@ type Service = {
   features_en: string | null;
   price_egp: number;
   price_usd: number;
+  featured: boolean;
+};
+
+// الشكل اللي راجع من Supabase (الأرقام ممكن ترجع string)
+type ServiceRow = Omit<Service, 'price_egp' | 'price_usd'> & {
+  price_egp: number | string;
+  price_usd: number | string;
 };
 
 const badgeClass =
   'inline-block rounded-full border border-gold/40 bg-gold/10 text-sm font-bold text-gold-light';
 
-const STEPS = [1, 2, 3, 4];
+const STEPS = [1, 2, 3, 4] as const;
 
 export default function AirportServicesPage() {
   const t = useTranslations('AirportServices');
   const isAr = useLocale() === 'ar';
   const { currency } = useCurrency();
 
+  const supabase = useMemo(() => createClient(), []);
+
   const [items, setItems] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+
+    const { data, error } = await supabase
+      .from('airport_services')
+      .select('id,name_ar,name_en,description_ar,description_en,features_ar,features_en,price_egp,price_usd,featured')
+      .eq('active', true)
+      .order('sort_order').order('name_ar').order('id');
+
+    if (error) {
+      setFailed(true);
+    } else {
+      setItems(
+        ((data ?? []) as ServiceRow[]).map((s) => ({
+          ...s,
+          featured: Boolean(s.featured),
+          price_egp: Number(s.price_egp),
+          price_usd: Number(s.price_usd),
+        }))
+      );
+    }
+    setLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
     let alive = true;
 
-    createClient()
-      .from('airport_services')
-      .select('*')
-      .eq('active', true)
-      .order('sort_order', { ascending: true })
-      .then(({ data, error }) => {
-        if (!alive) return;
-        if (error) setFailed(true);
-        else
-          setItems(
-            (data ?? []).map((s: any) => ({
-              ...s,
-              price_egp: Number(s.price_egp),
-              price_usd: Number(s.price_usd),
-            }))
-          );
-        setLoading(false);
-      });
+    (async () => {
+      await load();
+      if (!alive) return;
+    })();
 
     return () => {
       alive = false;
     };
-  }, []);
+  }, [load]);
 
   const price = (s: Service) =>
     new Intl.NumberFormat(isAr ? 'ar-EG' : 'en-US', {
       style: 'currency',
       currency,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(currency === 'EGP' ? s.price_egp : s.price_usd);
 
   const lines = (text: string | null) =>
@@ -87,9 +108,11 @@ export default function AirportServicesPage() {
         <span className="pointer-events-none absolute -bottom-24 end-1/4 -z-10 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
 
         <div className="w-full max-w-3xl text-center" style={{ marginInline: 'auto', paddingInline: '1rem' }}>
-          <span className={badgeClass} style={{ padding: '0.3rem 1rem', marginBlockEnd: '1.25rem' }}>
-            {t('badge')}
-          </span>
+          <div style={{ marginBlockEnd: '1.25rem' }}>
+            <span className={badgeClass} style={{ padding: '0.3rem 1rem' }}>
+              {t('badge')}
+            </span>
+          </div>
 
           <h1 className="text-4xl font-extrabold leading-tight text-white md:text-5xl md:leading-tight" style={{ marginBlockEnd: '1rem' }}>
             {t.rich('title', {
@@ -111,7 +134,12 @@ export default function AirportServicesPage() {
           {failed ? (
             <div className="rounded-3xl border border-red-500/40 bg-red-500/10 text-center" style={{ padding: '2.5rem 1.5rem' }}>
               <p className="text-lg font-bold text-red-300">{t('loadError')}</p>
-              <button type="button" onClick={() => window.location.reload()} style={{ padding: '0.6rem 1.6rem', marginBlockStart: '1rem' }} className="rounded-xl border border-red-400 font-bold text-red-300 transition hover:bg-red-400 hover:text-navy">
+              <button
+                type="button"
+                onClick={load}
+                style={{ padding: '0.6rem 1.6rem', marginBlockStart: '1rem' }}
+                className="rounded-xl border border-red-400 font-bold text-red-300 transition hover:bg-red-400 hover:text-navy"
+              >
                 {t('retry')}
               </button>
             </div>
@@ -123,69 +151,62 @@ export default function AirportServicesPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center" style={{ padding: '4rem 1.5rem' }}>
-              <span className="text-5xl">✈️</span>
               <p className="text-xl font-bold text-white">{t('emptyTitle')}</p>
               <p className="text-muted">{t('emptyText')}</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-3">
-              {items.map((s, i) => {
-                const featured = items.length === 3 && i === 2;
-                return (
-                  <div
-                    key={s.id}
-                    className={`group relative flex flex-col overflow-hidden rounded-3xl border bg-navy-light transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-gold/15 ${
-                      featured ? 'border-gold' : 'border-line hover:border-gold'
-                    }`}
-                    style={{ padding: '2rem 1.7rem' }}
-                  >
-                    <span className="pointer-events-none absolute -top-16 -end-16 h-44 w-44 rounded-full bg-gold/10 blur-3xl transition duration-500 group-hover:bg-gold/25" />
+              {items.map((s) => (
+                <div
+                  key={s.id}
+                  className={`group relative flex flex-col overflow-hidden rounded-3xl border border-t-gold/40 bg-navy-light transition duration-300 md:hover:-translate-y-2 hover:shadow-2xl hover:shadow-gold/15 ${
+                    s.featured ? 'border-gold' : 'border-line hover:border-gold'
+                  }`}
+                  style={{ padding: '2rem 1.7rem' }}
+                >
+                  <span className="pointer-events-none absolute -top-16 -end-16 h-44 w-44 rounded-full bg-gold/10 blur-3xl transition duration-500 group-hover:bg-gold/25" />
 
-                    {featured && (
-                      <span className="absolute end-4 top-4 rounded-full bg-gold text-xs font-bold text-navy" style={{ padding: '0.2rem 0.8rem' }}>
-                        {t('popular')}
-                      </span>
-                    )}
-
-                    <span className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-gold/40 bg-gold/10 text-3xl transition group-hover:bg-gold/20" style={{ marginBlockEnd: '1.25rem' }}>
-                      {s.icon}
+                  {s.featured && (
+                    <span className="absolute end-4 top-4 rounded-full bg-gold text-xs font-bold text-navy" style={{ padding: '0.2rem 0.8rem' }}>
+                      {t('popular')}
                     </span>
+                  )}
 
-                    <h2 className="relative text-2xl font-bold text-white transition-colors group-hover:text-gold-light" style={{ marginBlockEnd: '0.6rem' }}>
-                      {isAr ? s.name_ar : s.name_en}
-                    </h2>
 
-                    <p className="relative leading-8 text-muted" style={{ marginBlockEnd: '1.1rem' }}>
-                      {isAr ? s.description_ar : s.description_en}
+                  <h2 className="relative text-2xl font-bold text-white transition-colors group-hover:text-gold-light" style={{ marginBlockEnd: '0.6rem' }}>
+                    {isAr ? s.name_ar : s.name_en}
+                  </h2>
+
+                  <p className="relative leading-8 text-muted" style={{ marginBlockEnd: '1.1rem' }}>
+                    {isAr ? s.description_ar : s.description_en}
+                  </p>
+
+                  <ul className="relative flex flex-col gap-2.5" style={{ marginBlockEnd: '1.5rem' }}>
+                    {lines(isAr ? s.features_ar : s.features_en).map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2.5 text-white/85">
+                        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold" style={{ marginBlockStart: '0.55rem' }} />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="relative border-t border-line" style={{ marginBlockStart: 'auto', paddingBlockStart: '1.25rem' }}>
+                    <p className="text-xs text-muted">{t('from')}</p>
+                    <p className="text-3xl font-extrabold text-gold-light" style={{ marginBlockEnd: '1rem' }}>
+                      {price(s)}
+                      <span className="text-sm font-normal text-muted"> / {t('perService')}</span>
                     </p>
 
-                    <ul className="relative flex flex-col gap-2.5" style={{ marginBlockEnd: '1.5rem' }}>
-                      {lines(isAr ? s.features_ar : s.features_en).map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-white/85">
-                          <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold text-xs font-bold text-navy">✓</span>
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="relative mt-auto border-t border-line" style={{ paddingBlockStart: '1.25rem' }}>
-                      <p className="text-xs text-muted">{t('from')}</p>
-                      <p className="text-3xl font-extrabold text-gold-light" style={{ marginBlockEnd: '1rem' }}>
-                        {price(s)}
-                        <span className="text-sm font-normal text-muted"> / {t('perService')}</span>
-                      </p>
-
-                      <Link
-                        href={`/booking?type=airport&id=${s.id}`}
-                        style={{ padding: '0.8rem 1.5rem' }}
-                        className="block rounded-xl bg-linear-to-br from-gold to-gold-light text-center font-bold text-navy transition hover:shadow-lg hover:shadow-gold/40"
-                      >
-                        {t('bookNow')}
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/booking?type=airport&id=${s.id}`}
+                      style={{ padding: '0.8rem 1.5rem' }}
+                      className="block rounded-xl bg-linear-to-br from-gold to-gold-light text-center font-bold text-navy transition hover:shadow-lg hover:shadow-gold/40"
+                    >
+                      {t('bookNow')}
+                    </Link>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -195,9 +216,11 @@ export default function AirportServicesPage() {
       <section className="border-y border-line bg-navy-light/50" style={{ paddingBlock: '4.5rem' }}>
         <div className="w-full max-w-6xl" style={{ marginInline: 'auto', paddingInline: '1rem' }}>
           <div className="text-center" style={{ marginBlockEnd: '3rem' }}>
-            <span className={badgeClass} style={{ padding: '0.25rem 0.9rem', marginBlockEnd: '0.9rem' }}>
-              {t('stepsBadge')}
-            </span>
+            <div style={{ marginBlockEnd: '0.9rem' }}>
+              <span className={badgeClass} style={{ padding: '0.25rem 0.9rem' }}>
+                {t('stepsBadge')}
+              </span>
+            </div>
             <h2 className="text-3xl font-extrabold text-white md:text-4xl">{t('stepsTitle')}</h2>
           </div>
 
@@ -207,7 +230,9 @@ export default function AirportServicesPage() {
                 <span className="absolute -top-5 start-1/2 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-linear-to-br from-gold to-gold-light text-lg font-extrabold text-navy shadow-lg shadow-gold/30 rtl:translate-x-1/2">
                   {n}
                 </span>
-                <h3 className="text-lg font-bold text-white" style={{ marginBlockEnd: '0.6rem' }}>{t(`step${n}Title`)}</h3>
+                <h3 className="text-lg font-bold text-white" style={{ marginBlockEnd: '0.6rem' }}>
+                  {t(`step${n}Title`)}
+                </h3>
                 <p className="leading-8 text-muted">{t(`step${n}Text`)}</p>
               </div>
             ))}
@@ -219,9 +244,13 @@ export default function AirportServicesPage() {
       <section style={{ paddingBlock: '4.5rem' }}>
         <div className="w-full max-w-4xl" style={{ marginInline: 'auto', paddingInline: '1rem' }}>
           <div className="relative overflow-hidden rounded-3xl border border-gold/40 bg-linear-to-br from-navy-light to-navy text-center shadow-2xl shadow-black/40" style={{ padding: '3rem 1.5rem' }}>
-            <span className="pointer-events-none absolute -top-20 start-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-gold/20 blur-3xl" />
-            <h2 className="relative text-3xl font-extrabold text-white" style={{ marginBlockEnd: '0.8rem' }}>{t('ctaTitle')}</h2>
-            <p className="relative mx-auto max-w-xl leading-9 text-white/75" style={{ marginBlockEnd: '1.75rem' }}>{t('ctaText')}</p>
+            <span className="pointer-events-none absolute -top-20 start-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-gold/20 blur-3xl rtl:translate-x-1/2" />
+            <h2 className="relative text-3xl font-extrabold text-white" style={{ marginBlockEnd: '0.8rem' }}>
+              {t('ctaTitle')}
+            </h2>
+            <p className="relative max-w-xl leading-9 text-white/75" style={{ marginInline: 'auto', marginBlockEnd: '1.75rem' }}>
+              {t('ctaText')}
+            </p>
             <a
               href={`${WHATSAPP_URL}?text=${encodeURIComponent(t('ctaWaMessage'))}`}
               target="_blank"
@@ -234,7 +263,7 @@ export default function AirportServicesPage() {
           </div>
 
           <p className="text-center text-sm leading-7 text-muted" style={{ marginBlockStart: '1.5rem' }}>
-            ℹ️ {t('disclaimer')}
+            {t('disclaimer')}
           </p>
         </div>
       </section>

@@ -234,7 +234,7 @@ export default function AdminCustomersPage() {
       'بعد ما تدخل، ننصحك تغيّرها لكلمة مرور تفتكرها.',
     ].join('\n');
 
-  const Avatar = ({ c, size = 'h-12 w-12 text-lg' }: { c: Customer; size?: string }) => (
+  const renderAvatar = ({ c, size = 'h-12 w-12 text-lg' }: { c: Customer; size?: string }) => (
     <span
       className={`flex shrink-0 items-center justify-center rounded-full bg-linear-to-br from-gold to-gold-light font-extrabold text-navy ${size}`}
     >
@@ -242,10 +242,10 @@ export default function AdminCustomersPage() {
     </span>
   );
 
-  const CodeChip = ({ code }: { code: string }) => (
+  const renderCodeChip = ({ code }: { code: string }) => (
     <button
       type="button"
-      onClick={() => copy(code, `تم نسخ ${code} ✓`)}
+      onClick={() => copy(code, `تم نسخ ${code}`)}
       title="اضغط للنسخ"
       dir="ltr"
       className="rounded-md border border-dashed border-gold/50 text-xs font-bold tracking-wider text-gold-light transition hover:bg-gold/10"
@@ -255,7 +255,7 @@ export default function AdminCustomersPage() {
     </button>
   );
 
-  const Actions = ({ c }: { c: Customer }) => {
+  const renderActions = ({ c }: { c: Customer }) => {
     const wa = waNumber(c.phone);
     return (
       <div className="flex flex-wrap items-center gap-2">
@@ -395,7 +395,6 @@ export default function AdminCustomersPage() {
           className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
           style={{ padding: '3.5rem 1.5rem' }}
         >
-          <span className="text-5xl">👥</span>
           <p className="text-xl font-bold text-white">
             {customers.length === 0 ? 'لسه مفيش عملاء' : 'مفيش نتائج للبحث'}
           </p>
@@ -426,10 +425,10 @@ export default function AdminCustomersPage() {
                     <tr key={c.id} className="border-b border-line/60 transition hover:bg-navy/50">
                       <td style={{ padding: '0.9rem 1rem' }}>
                         <div className="flex items-center gap-3">
-                          <Avatar c={c} />
+                          {renderAvatar({ c: c })}
                           <div className="min-w-0">
                             <p className="truncate font-bold text-white">{c.full_name || 'بدون اسم'}</p>
-                            <CodeChip code={c.customer_code} />
+                            {renderCodeChip({ code: c.customer_code })}
                           </div>
                         </div>
                       </td>
@@ -452,7 +451,7 @@ export default function AdminCustomersPage() {
                         {dateAr(c.created_at)}
                       </td>
                       <td style={{ padding: '0.9rem 1rem' }}>
-                        <Actions c={c} />
+                        {renderActions({ c: c })}
                       </td>
                     </tr>
                   );
@@ -472,10 +471,10 @@ export default function AdminCustomersPage() {
                   style={{ padding: '1rem' }}
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar c={c} />
+                    {renderAvatar({ c: c })}
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-white">{c.full_name || 'بدون اسم'}</p>
-                      <CodeChip code={c.customer_code} />
+                      {renderCodeChip({ code: c.customer_code })}
                     </div>
                   </div>
 
@@ -501,7 +500,7 @@ export default function AdminCustomersPage() {
                     </div>
                   </div>
 
-                  <Actions c={c} />
+                  {renderActions({ c: c })}
                 </div>
               );
             })}
@@ -520,10 +519,10 @@ export default function AdminCustomersPage() {
               style={{ padding: '1rem 1.25rem' }}
             >
               <div className="flex items-center gap-3">
-                <Avatar c={selected} size="h-11 w-11 text-lg" />
+                {renderAvatar({ c: selected, size: "h-11 w-11 text-lg" })}
                 <div>
                   <h2 className="text-lg font-extrabold text-white">{selected.full_name || 'بدون اسم'}</h2>
-                  <CodeChip code={selected.customer_code} />
+                  {renderCodeChip({ code: selected.customer_code })}
                 </div>
               </div>
               <button
@@ -602,11 +601,10 @@ export default function AdminCustomersPage() {
                       >
                         <div className="min-w-0">
                           <p className="truncate font-bold text-white">
-                            {b.booking_type === 'car' ? '🚗' : '🏢'}{' '}
                             {b.cars?.name_ar ?? b.apartments?.name_ar ?? '—'}
                           </p>
                           <p className="text-xs text-muted">
-                            {dateAr(b.start_date)} ← {dateAr(b.end_date)}
+                            {dateAr(b.start_date)} – {dateAr(b.end_date)}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -676,9 +674,6 @@ export default function AdminCustomersPage() {
           >
             {!newPassword ? (
               <>
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gold/15 text-2xl">
-                  🔑
-                </span>
                 <h3 className="text-xl font-extrabold text-white" style={{ marginBlock: '1rem 0.5rem' }}>
                   تغيير كلمة مرور العميل
                 </h3>
@@ -719,9 +714,6 @@ export default function AdminCustomersPage() {
               </>
             ) : (
               <>
-                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-2xl">
-                  ✅
-                </span>
                 <h3 className="text-xl font-extrabold text-white" style={{ marginBlock: '1rem 0.5rem' }}>
                   تم تغيير كلمة المرور
                 </h3>
@@ -729,7 +721,7 @@ export default function AdminCustomersPage() {
 
                 <button
                   type="button"
-                  onClick={() => copy(newPassword, 'تم نسخ كلمة المرور ✓')}
+                  onClick={() => copy(newPassword, 'تم نسخ كلمة المرور')}
                   title="اضغط للنسخ"
                   dir="ltr"
                   className="w-full rounded-xl border-2 border-dashed border-gold text-2xl font-extrabold tracking-[0.25em] text-gold-light transition hover:bg-gold/10"

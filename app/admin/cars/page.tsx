@@ -87,10 +87,10 @@ export default function AdminCarsPage() {
     const next = !car.active;
     setCars((p) => p.map((c) => (c.id === car.id ? { ...c, active: next } : c)));
 
-    const { error: err } = await createClient().from('cars').update({ active: next }).eq('id', car.id);
+    const { error: err } = await createClient().from('cars').update({ active: next }).eq('id', car.id).select('id').single();
     if (err) {
       setCars((p) => p.map((c) => (c.id === car.id ? { ...c, active: !next } : c)));
-      showToast('فشل تغيير الحالة');
+      showToast(err.message);
     } else {
       showToast(next ? 'السيارة بقت ظاهرة في الموقع' : 'السيارة اتخبّت من الموقع');
     }
@@ -101,14 +101,10 @@ export default function AdminCarsPage() {
     setDeleteBusy(true);
     setDeleteError('');
 
-    const { error: err } = await createClient().from('cars').delete().eq('id', deleting.id);
+    const { error: err } = await createClient().from('cars').delete().eq('id', deleting.id).select('id').single();
 
     if (err) {
-      setDeleteError(
-        err.code === '23503'
-          ? 'مينفعش تحذف سيارة عليها حجوزات. اقفل زرار "ظاهرة" عشان تخفيها من الموقع بدل الحذف.'
-          : err.message
-      );
+      setDeleteError(err.message);
       setDeleteBusy(false);
       return;
     }
@@ -148,9 +144,7 @@ export default function AdminCarsPage() {
     car.images[0] ? (
       <img src={car.images[0]} alt={car.name_ar} className="h-16 w-24 shrink-0 rounded-xl object-cover" />
     ) : (
-      <span className="flex h-16 w-24 shrink-0 items-center justify-center rounded-xl border border-line bg-navy text-2xl">
-        🚗
-      </span>
+      <span className="h-16 w-24 shrink-0 rounded-xl border border-line bg-navy" aria-hidden="true" />
     );
 
   const Actions = ({ car }: { car: CarRow }) => (
@@ -194,7 +188,6 @@ export default function AdminCarsPage() {
           style={{ padding: '0.75rem 1.5rem' }}
           className="flex items-center gap-2 rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
         >
-          <span className="text-xl leading-none">+</span>
           إضافة سيارة
         </button>
       </div>
@@ -257,7 +250,6 @@ export default function AdminCarsPage() {
           className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
           style={{ padding: '3.5rem 1.5rem' }}
         >
-          <span className="text-5xl">🚗</span>
           <p className="text-xl font-bold text-white">
             {cars.length === 0 ? 'لسه مفيش سيارات' : 'مفيش نتائج للبحث'}
           </p>
@@ -400,7 +392,7 @@ export default function AdminCarsPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة السيارة ✓');
+            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة السيارة');
             load();
           }}
         />
@@ -417,9 +409,6 @@ export default function AdminCarsPage() {
             className="relative w-full max-w-md rounded-3xl border border-line bg-navy-light text-center shadow-2xl shadow-black/60"
             style={{ padding: '2rem 1.5rem' }}
           >
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-2xl">
-              🗑️
-            </span>
             <h3 className="text-xl font-extrabold text-white" style={{ marginBlock: '1rem 0.5rem' }}>
               حذف السيارة؟
             </h3>

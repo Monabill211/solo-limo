@@ -19,12 +19,10 @@ const STRENGTH = ['', 'ضعيفة', 'مقبولة', 'جيدة', 'قوية'];
 const STRENGTH_COLOR = ['', 'bg-red-400', 'bg-amber-400', 'bg-gold-light', 'bg-emerald-400'];
 
 function Section({
-  icon,
   title,
   text,
   children,
 }: {
-  icon: string;
   title: string;
   text: string;
   children: React.ReactNode;
@@ -32,9 +30,6 @@ function Section({
   return (
     <section className="rounded-3xl border border-line bg-navy-light" style={{ padding: '1.5rem' }}>
       <div className="flex items-start gap-3" style={{ marginBlockEnd: '1.25rem' }}>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gold/40 bg-gold/10 text-xl">
-          {icon}
-        </span>
         <div>
           <h2 className="text-lg font-bold text-white md:text-xl">{title}</h2>
           <p className="text-sm text-muted">{text}</p>
@@ -74,16 +69,17 @@ function PasswordInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
-        style={{ padding: '0.75rem 3rem 0.75rem 1rem' }}
+        style={{ padding: '0.75rem 1rem' }}
         className={`${inputClass} text-start`}
       />
       <button
         type="button"
         onClick={() => setShow(!show)}
         aria-label={show ? 'إخفاء' : 'إظهار'}
-        className="absolute end-3 top-1/2 -translate-y-1/2 text-sm font-bold text-muted transition hover:text-gold-light"
+        className="block text-sm font-semibold text-gold-light hover:underline"
+        style={{ marginInlineStart: 'auto', marginBlockStart: '0.4rem' }}
       >
-        {show ? '🙈' : '👁'}
+        {show ? 'إخفاء' : 'إظهار'}
       </button>
     </div>
   );
@@ -136,7 +132,7 @@ export default function AdminSettingsPage() {
 
   /* ---------- سعر الصرف ---------- */
   const [rate, setRate] = useState('');
-  const [rateMissing, setRateMissing] = useState(false);
+  const [rateUnavailable, setRateUnavailable] = useState('');
   const [rateBusy, setRateBusy] = useState(false);
   const [rateMsg, setRateMsg] = useState<null | { kind: 'error' | 'success'; text: string }>(null);
 
@@ -145,27 +141,35 @@ export default function AdminSettingsPage() {
 
     (async () => {
       const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
+      const { data, error: authError } = await supabase.auth.getUser();
       const user = data.user;
-      if (!alive || !user) return;
+      if (!alive) return;
+      if (!user) {
+        const message = authError?.message ?? 'تعذّر التحقق من الحساب.';
+        setProfileMsg({ kind: 'error', text: message });
+        setRateUnavailable(message);
+        setLoading(false);
+        return;
+      }
 
       setUserId(user.id);
       setEmail(user.email ?? '');
 
       const [profile, setting] = await Promise.all([
         supabase.from('profiles').select('full_name, phone').eq('id', user.id).maybeSingle(),
-        supabase.from('settings').select('value').eq('key', 'usd_egp_rate').maybeSingle(),
+        supabase.from('settings').select('value').eq('key', 'usd_egp_rate').single(),
       ]);
 
       if (!alive) return;
 
       setName(profile.data?.full_name ?? '');
       setPhone(profile.data?.phone ?? '');
+      if (profile.error) setProfileMsg({ kind: 'error', text: profile.error.message });
 
-      if (setting.error) {
-        setRateMissing(setting.error.code === '42P01');
+      if (setting.error || typeof setting.data?.value !== 'number') {
+        setRateUnavailable(setting.error?.message ?? 'سعر الصرف المخزّن غير صالح.');
       } else {
-        setRate(setting.data?.value !== undefined ? String(setting.data.value) : '50');
+        setRate(String(setting.data.value));
       }
 
       setLoading(false);
@@ -186,13 +190,15 @@ export default function AdminSettingsPage() {
     const { error } = await createClient()
       .from('profiles')
       .update({ full_name: name.trim(), phone: phone.trim() || null })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select('id')
+      .single();
     setProfileBusy(false);
 
     setProfileMsg(
       error
         ? { kind: 'error', text: 'فشل الحفظ: ' + error.message }
-        : { kind: 'success', text: 'تم حفظ بياناتك ✓' }
+        : { kind: 'success', text: 'تم حفظ بياناتك' }
     );
   }
 
@@ -226,7 +232,7 @@ export default function AdminSettingsPage() {
     setCurrent('');
     setNext('');
     setConfirm('');
-    setPwMsg({ kind: 'success', text: 'تم تغيير كلمة المرور بنجاح ✓' });
+    setPwMsg({ kind: 'success', text: 'تم تغيير كلمة المرور بنجاح' });
   }
 
   async function saveRate(e: React.FormEvent) {
@@ -240,7 +246,9 @@ export default function AdminSettingsPage() {
     setRateBusy(true);
     const { error } = await createClient()
       .from('settings')
-      .upsert({ key: 'usd_egp_rate', value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      .upsert({ key: 'usd_egp_rate', value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+      .select('key')
+      .single();
     setRateBusy(false);
 
     setRateMsg(
@@ -252,7 +260,7 @@ export default function AdminSettingsPage() {
                 ? 'الحساب ده ملوش صلاحية التعديل.'
                 : 'فشل الحفظ: ' + error.message,
           }
-        : { kind: 'success', text: 'تم حفظ سعر الصرف ✓ وهيتطبق على الحجوزات الجديدة.' }
+        : { kind: 'success', text: 'تم حفظ سعر الصرف وهيتطبق على الحجوزات الجديدة.' }
     );
   }
 
@@ -282,7 +290,7 @@ export default function AdminSettingsPage() {
 
       <div className="grid items-start gap-6 xl:grid-cols-2">
         {/* ================= حسابي ================= */}
-        <Section icon="👤" title="حسابي" text="بياناتك الشخصية كمدير للموقع.">
+        <Section title="حسابي" text="بياناتك الشخصية كمدير للموقع.">
           <form onSubmit={saveProfile} className="flex flex-col gap-4">
             <Field label="الإيميل" hint="الإيميل ما يتغيرش من هنا.">
               <input dir="ltr" value={email} disabled style={{ padding: '0.75rem 1rem' }} className={`${inputClass} text-start`} />
@@ -303,7 +311,7 @@ export default function AdminSettingsPage() {
         </Section>
 
         {/* ================= كلمة المرور ================= */}
-        <Section icon="🔑" title="تغيير كلمة المرور" text="اكتب كلمة مرورك الحالية الأول، وبعدها الجديدة.">
+        <Section title="تغيير كلمة المرور" text="اكتب كلمة مرورك الحالية الأول، وبعدها الجديدة.">
           <form onSubmit={changePassword} className="flex flex-col gap-4">
             <Field label="كلمة المرور الحالية">
               <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" />
@@ -341,12 +349,9 @@ export default function AdminSettingsPage() {
         </Section>
 
         {/* ================= سعر الصرف ================= */}
-        <Section icon="💱" title="سعر الصرف" text="سعر الدولار بالجنيه، بيتحسب بيه حجوزات العملاء اللي بيدفعوا بالدولار.">
-          {rateMissing ? (
-            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 text-sm leading-7 text-amber-300" style={{ padding: '0.9rem 1rem' }}>
-              جدول <span dir="ltr">settings</span> مش موجود في Supabase. شغّل كود الـ SQL الخاص بيه (ملف{' '}
-              <span dir="ltr">08_settings.sql</span>) وبعدها اعمل ريفريش للصفحة.
-            </div>
+        <Section title="سعر الصرف" text="سعر الدولار بالجنيه، بيتحسب بيه حجوزات العملاء اللي بيدفعوا بالدولار.">
+          {rateUnavailable ? (
+            <Message kind="error">{rateUnavailable}</Message>
           ) : (
             <form onSubmit={saveRate} className="flex flex-col gap-4">
               <Field label="1 دولار = كام جنيه؟">
@@ -359,7 +364,7 @@ export default function AdminSettingsPage() {
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
                     placeholder="50"
-                    style={{ padding: '0.75rem 4rem 0.75rem 1rem' }}
+                    style={{ padding: '0.75rem 1rem' }}
                     className={`${inputClass} text-start text-lg font-bold`}
                   />
                   <span className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gold">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createClient } from '../../lib/supabase/client';
+import { catalogError, catalogImageAccept, isCatalogMoney, newCatalogId, saveCatalogRecord, uploadCatalogImages } from '../../lib/supabase/admin-catalog';
 
 export type ApartmentRow = {
   id: string;
@@ -104,6 +104,8 @@ export default function ApartmentForm({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const recordId = useRef(initial?.id);
+  const busy = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const set = (k: keyof typeof f, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
@@ -111,21 +113,13 @@ export default function ApartmentForm({
   // قفل سكرول الصفحة + Esc
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !saving && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !busy.current && onClose();
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose, saving]);
-
-  function readableError(err: { message: string; code?: string }) {
-    const m = err.message.toLowerCase();
-    if (err.code === '42501' || m.includes('row-level security'))
-      return 'الحساب ده ملوش صلاحية التعديل. اتأكد إنه أدمن.';
-    if (m.includes('bucket not found')) return 'مخزن الصور (images) مش موجود في Supabase.';
-    return err.message;
-  }
 
   const toggleAmenity = (k: string) =>
     setAmenities((p) => (p.includes(k) ? p.filter((x) => x !== k) : [...p, k]));
@@ -138,43 +132,21 @@ export default function ApartmentForm({
   }
 
   async function upload(files: FileList | null) {
-    if (!files?.length) return;
+    if (!files?.length || busy.current) return;
+    busy.current = true;
     setError('');
     setUploading(true);
-
-    const supabase = createClient();
-    const urls: string[] = [];
-
-    for (const file of Array.from(files)) {
-      if (images.length + urls.length >= 8) {
-        setError('أقصى عدد للصور 8 صور.');
-        break;
-      }
-      if (!file.type.startsWith('image/')) {
-        setError('الملف لازم يكون صورة.');
-        continue;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('حجم الصورة لازم يكون أقل من 5 ميجا.');
-        continue;
-      }
-
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `apartments/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from('images')
-        .upload(path, file, { cacheControl: '31536000', upsert: false });
-
-      if (upErr) {
-        setError('فشل رفع الصورة: ' + readableError(upErr as { message: string }));
-        continue;
-      }
-      urls.push(supabase.storage.from('images').getPublicUrl(path).data.publicUrl);
+    try {
+      setError(await uploadCatalogImages('apartments', files, 8 - images.length, (url) => {
+        setImages((current) => [...current, url]);
+      }));
+    } catch (error) {
+      setError(catalogError(error));
+    } finally {
+      busy.current = false;
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
-
-    setImages((p) => [...p, ...urls]);
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = '';
   }
 
   const makeCover = (i: number) =>
@@ -183,6 +155,7 @@ export default function ApartmentForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy.current) return;
     setError('');
 
     const priceEgp = Number(f.price_egp);
@@ -191,13 +164,17 @@ export default function ApartmentForm({
 
     if (!f.name_ar.trim() || !f.name_en.trim())
       return setError('اكتب اسم الشقة بالعربي والإنجليزي.');
-    if (f.price_egp === '' || f.price_usd === '' || priceEgp < 0 || priceUsd < 0)
+    if (f.price_egp === '' || f.price_usd === '' || !isCatalogMoney(priceEgp) || !isCatalogMoney(priceUsd))
       return setError('اكتب سعر الليلة بالجنيه وبالدولار.');
-    if (cost !== null && (Number.isNaN(cost) || cost < 0))
+    if (cost !== null && !isCatalogMoney(cost))
       return setError('تكلفة الليلة لازم تكون رقم صحيح.');
 
-    setSaving(true);
-    const supabase = createClient();
+    const bedrooms = f.bedrooms === '' ? null : Number(f.bedrooms);
+    const max_guests = f.max_guests === '' ? null : Number(f.max_guests);
+    if ((bedrooms !== null && (!Number.isInteger(bedrooms) || bedrooms < 0 || bedrooms > 20)) ||
+        (max_guests !== null && (!Number.isInteger(max_guests) || max_guests < 1 || max_guests > 50))) {
+      return setError('راجع عدد الغرف والحد الأقصى للضيوف.');
+    }
 
     const payload = {
       name_ar: f.name_ar.trim(),
@@ -206,8 +183,8 @@ export default function ApartmentForm({
       description_en: f.description_en.trim() || null,
       location_ar: f.location_ar.trim() || null,
       location_en: f.location_en.trim() || null,
-      bedrooms: f.bedrooms ? Number(f.bedrooms) : null,
-      max_guests: f.max_guests ? Number(f.max_guests) : null,
+      bedrooms,
+      max_guests,
       amenities,
       images,
       price_egp: priceEgp,
@@ -215,42 +192,19 @@ export default function ApartmentForm({
       active: f.active,
     };
 
-    let aptId = initial?.id;
-
-    if (isEdit) {
-      const { error: err } = await supabase.from('apartments').update(payload).eq('id', aptId);
-      if (err) {
-        setError(readableError(err));
-        setSaving(false);
-        return;
-      }
-    } else {
-      const { data, error: err } = await supabase
-        .from('apartments')
-        .insert(payload)
-        .select('id')
-        .single();
-      if (err || !data) {
-        setError(readableError(err ?? { message: 'حصل خطأ' }));
-        setSaving(false);
-        return;
-      }
-      aptId = data.id;
+    busy.current = true;
+    setSaving(true);
+    try {
+      recordId.current ??= newCatalogId();
+      const error = await saveCatalogRecord('apartments', recordId.current, isEdit, payload, cost);
+      if (error) setError(error);
+      else onSaved();
+    } catch (error) {
+      setError(catalogError(error));
+    } finally {
+      busy.current = false;
+      setSaving(false);
     }
-
-    if (cost !== null) {
-      const { error: costErr } = await supabase
-        .from('costs')
-        .upsert({ apartment_id: aptId, cost_egp: cost }, { onConflict: 'apartment_id' });
-      if (costErr) {
-        setError('اتحفظت الشقة، بس التكلفة ما اتحفظتش: ' + readableError(costErr));
-        setSaving(false);
-        onSaved();
-        return;
-      }
-    }
-
-    onSaved();
   }
 
   const profit =
@@ -280,7 +234,7 @@ export default function ApartmentForm({
           <button
             type="button"
             onClick={onClose}
-            disabled={saving}
+            disabled={saving || uploading}
             aria-label="إغلاق"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-muted transition hover:border-gold hover:text-gold-light"
           >
@@ -366,6 +320,7 @@ export default function ApartmentForm({
                   type="number"
                   dir="ltr"
                   min={0}
+                  step="0.01"
                   value={f.price_egp}
                   onChange={(e) => set('price_egp', e.target.value)}
                   placeholder="3000"
@@ -378,6 +333,7 @@ export default function ApartmentForm({
                   type="number"
                   dir="ltr"
                   min={0}
+                  step="0.01"
                   value={f.price_usd}
                   onChange={(e) => set('price_usd', e.target.value)}
                   placeholder="65"
@@ -390,6 +346,7 @@ export default function ApartmentForm({
                   type="number"
                   dir="ltr"
                   min={0}
+                  step="0.01"
                   value={f.cost_egp}
                   onChange={(e) => set('cost_egp', e.target.value)}
                   placeholder="1500"
@@ -430,7 +387,6 @@ export default function ApartmentForm({
                         : 'border-line text-muted hover:border-gold hover:text-gold-light'
                     }`}
                   >
-                    {on && '✓ '}
                     {label}
                   </button>
                 );
@@ -551,10 +507,9 @@ export default function ApartmentForm({
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
+                  disabled={uploading || saving}
                   className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gold/40 text-gold transition hover:border-gold hover:bg-gold/5 disabled:opacity-60"
                 >
-                  <span className="text-3xl leading-none">{uploading ? '…' : '+'}</span>
                   <span className="text-sm font-bold">
                     {uploading ? 'جاري الرفع...' : 'إضافة صور'}
                   </span>
@@ -565,7 +520,7 @@ export default function ApartmentForm({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept={catalogImageAccept}
               multiple
               hidden
               onChange={(e) => upload(e.target.files)}
@@ -621,7 +576,7 @@ export default function ApartmentForm({
           <button
             type="button"
             onClick={onClose}
-            disabled={saving}
+            disabled={saving || uploading}
             style={{ padding: '0.75rem 1.75rem' }}
             className="rounded-xl border border-line font-bold text-muted transition hover:border-gold hover:text-gold-light"
           >

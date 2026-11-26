@@ -35,7 +35,7 @@ export default function Footer() {
 
         <div className="flex flex-col gap-2.5">
           <h4 className="text-gold" style={{ marginBlockEnd: '0.4rem' }}>{t('quickLinks')}</h4>
-          <Link href="/about" className={linkClass}>{h('about')}</Link>
+          <Link href="/About" className={linkClass}>{h('about')}</Link>
           <Link href="/contact" className={linkClass}>{h('contact')}</Link>
           <Link href="/faq" className={linkClass}>{h('faq')}</Link>
           <Link href="/privacy" className={linkClass}>{h('privacy')}</Link>
@@ -62,7 +62,7 @@ export default function Footer() {
         className="w-full max-w-6xl border-t border-line text-center text-sm text-muted"
         style={{ marginInline: 'auto', marginBlockStart: '2.5rem', paddingBlock: '1.2rem', paddingInline: '1rem' }}
       >
-        Developed by <a href="https://wa.me/201021219588" target="_blank" rel="noreferrer" className="bg-gold text-navy rounded-2xl font-bold" style={{ padding: '5px' }}>
+        {t('developedBy')} <a href="https://wa.me/201021219588" target="_blank" rel="noreferrer" className="bg-gold text-navy rounded-2xl font-bold" style={{ padding: '5px' }}>
           MoSalah
         </a>
       </div>

@@ -6,8 +6,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// TODO: حماية الداش بورد (التأكد إن المستخدم أدمن) لما نربط Supabase Auth
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return <AdminShell>{children}</AdminShell>;
 }

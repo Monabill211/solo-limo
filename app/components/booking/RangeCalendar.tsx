@@ -74,17 +74,17 @@ export default function RangeCalendar({
     });
 
   const nav =
-    'flex h-10 w-10 items-center justify-center rounded-xl border border-line text-gold transition hover:border-gold disabled:opacity-30 disabled:hover:border-line';
+    'min-h-10 rounded-xl border border-line text-xs font-semibold text-gold transition hover:border-gold disabled:opacity-30 disabled:hover:border-line';
 
   return (
     <div className="rounded-2xl border border-line bg-navy" style={{ padding: '1rem' }}>
-      <div className="flex items-center justify-between" style={{ marginBlockEnd: '1rem' }}>
-        <button type="button" onClick={() => move(-1)} disabled={isCurrentMonth} aria-label={t('prevMonth')} className={nav}>
-          <span className="rtl:rotate-180">‹</span>
+      <div className="flex flex-wrap items-center justify-between gap-2" style={{ marginBlockEnd: '1rem' }}>
+        <button type="button" onClick={() => move(-1)} disabled={isCurrentMonth} aria-label={t('prevMonth')} className={nav} style={{ paddingInline: '0.5rem' }}>
+          {t('prevMonth')}
         </button>
         <p className="font-bold text-white">{monthLabel}</p>
-        <button type="button" onClick={() => move(1)} aria-label={t('nextMonth')} className={nav}>
-          <span className="rtl:rotate-180">›</span>
+        <button type="button" onClick={() => move(1)} aria-label={t('nextMonth')} className={nav} style={{ paddingInline: '0.5rem' }}>
+          {t('nextMonth')}
         </button>
       </div>
 

@@ -1,25 +1,27 @@
 import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/app/lib/auth-server';
 import { serviceClient } from '@/app/lib/admin-server';
-import { getUsdRate } from '@/app/lib/settings';
-import { computeTotals, discountProblem, type Currency } from '@/app/lib/pricing';
+import type { Currency } from '@/app/lib/pricing';
 import { addDays, diffDays, isISO, todayISO } from '@/app/lib/dates';
 import { createCheckout, paymobEnabled } from '@/app/lib/paymob';
 
-const UUID = /^[0-9a-f-]{36}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
-const TABLE = { car: 'cars', apartment: 'apartments', airport: 'airport_services' } as const;
-const COST_COLUMN = { car: 'car_id', apartment: 'apartment_id', airport: 'airport_service_id' } as const;
-
+const bookingErrors = new Set([
+  'bad_dates', 'past_date', 'bad_contact', 'bad_flight', 'bad_time', 'bad_passengers',
+  'bad_extras', 'discount_invalid', 'discount_inactive', 'discount_expired', 'discount_not_yours', 'discount_used_up',
+]);
 export async function POST(req: Request) {
   const user = await getAuthUser();
   if (!user) return fail('unauthorized', 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
-    body = await req.json();
+    const value: unknown = await req.json();
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return fail('bad_request');
+    body = value as Record<string, unknown>;
   } catch {
     return fail('bad_request');
   }
@@ -66,142 +68,37 @@ export async function POST(req: Request) {
 
   if (body.start < todayISO()) return fail('past_date');
 
-  const extraIds: string[] = Array.from(
-    new Set(
-      (Array.isArray(body.extraIds) ? body.extraIds : []).filter(
-        (x: unknown) => typeof x === 'string' && UUID.test(x)
-      ) as string[]
-    )
-  );
-
+  const rawExtras = body.extraIds ?? [];
+  if (!Array.isArray(rawExtras) || rawExtras.length > 50 ||
+      !rawExtras.every((id): id is string => typeof id === 'string' && UUID.test(id))) return fail('bad_extras');
+  const extraIds = Array.from(new Set(rawExtras.map((id) => id.toLowerCase())));
   const admin = serviceClient();
-
-  // ---------- العنصر (السعر بيتقرا من الداتابيز مش من المتصفح) ----------
-  const { data: item } = await admin
-    .from(TABLE[type])
-    .select('id, name_ar, price_egp, price_usd, active')
-    .eq('id', body.itemId)
-    .maybeSingle();
-
-  if (!item || !item.active) return fail('not_found', 404);
-
-  // ---------- الإضافات ----------
-  let extras: any[] = [];
-  if (extraIds.length) {
-    const { data } = await admin
-      .from('extras')
-      .select('id, name_ar, price_egp, price_usd, per_day, applies_to')
-      .in('id', extraIds)
-      .eq('active', true);
-
-    extras = (data ?? []).filter((e) => !e.applies_to || e.applies_to === type);
-    if (extras.length !== extraIds.length) return fail('bad_extras');
-  }
-
-  // ---------- التكاليف (للماليات) ----------
-  const itemCost = await admin
-    .from('costs')
-    .select('cost_egp')
-    .eq(COST_COLUMN[type], item.id)
-    .maybeSingle();
-  const unitCost = Number(itemCost.data?.cost_egp ?? 0);
-
-  const extraCostMap = new Map<string, number>();
-  if (extras.length) {
-    const { data } = await admin
-      .from('costs')
-      .select('extra_id, cost_egp')
-      .in('extra_id', extras.map((e) => e.id));
-    (data ?? []).forEach((c) => extraCostMap.set(c.extra_id, Number(c.cost_egp)));
-  }
-
-  // ---------- كود الخصم ----------
-  let discount: { id: string; type: 'percent' | 'fixed'; value: number } | null = null;
-  const code = String(body.code ?? '').trim().toUpperCase();
-  if (code) {
-    const { data: d } = await admin.from('discount_codes').select('*').eq('code', code).maybeSingle();
-    const problem = discountProblem(d, user.id);
-    if (problem) return fail(problem);
-    discount = { id: d.id, type: d.type, value: Number(d.value) };
-  }
-
-  // ---------- الحساب ----------
-  const rate = await getUsdRate();
-  const unit = Number(currency === 'EGP' ? item.price_egp : item.price_usd);
-  const price = (e: any) => Number(currency === 'EGP' ? e.price_egp : e.price_usd);
-
-  const totals = computeTotals({
-    unit,
-    days,
-    currency,
-    rate,
-    extras: extras.map((e) => ({ price: price(e), perDay: e.per_day })),
-    discount,
-  });
-
-  // ---------- إنشاء الحجز ----------
-  const { data: booking, error: bookingError } = await admin
-    .from('bookings')
-    .insert({
-      user_id: user.id,
-      booking_type: type,
-      car_id: type === 'car' ? item.id : null,
-      apartment_id: type === 'apartment' ? item.id : null,
-      airport_service_id: isAirport ? item.id : null,
-      flight_number: flight,
-      service_time: time,
-      passengers,
-      start_date: body.start,
-      end_date: endDate,
-      customer_name: name,
-      customer_phone: phone,
-      notes: notes || null,
-      currency,
-      exchange_rate: currency === 'USD' ? rate : 1,
-      unit_price: unit,
-      extras_total: totals.extrasTotal,
-      discount_code_id: discount?.id ?? null,
-      discount_amount: totals.discountAmount,
-      total: totals.total,
-    })
-    .select('id')
-    .single();
+  const { data: booking, error: bookingError } = await admin.rpc('create_booking', {
+    p_user_id: user.id,
+    p_type: type,
+    p_item_id: body.itemId,
+    p_currency: currency,
+    p_start: body.start,
+    p_end: endDate,
+    p_name: name,
+    p_phone: phone,
+    p_notes: notes,
+    p_flight: flight,
+    p_time: time,
+    p_passengers: passengers,
+    p_extras: extraIds,
+    p_code: String(body.code ?? ''),
+  }).single<{ booking_id: string; total: number; item_name: string; paid: boolean }>();
 
   if (bookingError || !booking) {
-    // 23P01 = التواريخ متداخلة مع حجز تاني
-    return bookingError?.code === '23P01' ? fail('dates_taken', 409) : fail('booking_failed', 500);
-  }
-
-  // ---------- تفاصيل الحجز ----------
-  const extrasCost = extras.reduce(
-    (s, e) => s + (extraCostMap.get(e.id) ?? 0) * (e.per_day ? days : 1),
-    0
-  );
-
-  const [extrasRes, financeRes] = await Promise.all([
-    extras.length
-      ? admin.from('booking_extras').insert(
-          extras.map((e) => ({ booking_id: booking.id, extra_id: e.id, quantity: 1, unit_price: price(e) }))
-        )
-      : Promise.resolve({ error: null }),
-    admin.from('booking_finance').insert({
-      booking_id: booking.id,
-      unit_cost_egp: unitCost,
-      extras_cost_egp: extrasCost,
-      total_cost_egp: unitCost * days + extrasCost,
-    }),
-  ]);
-
-  if (extrasRes.error || financeRes.error) {
-    await admin.from('bookings').delete().eq('id', booking.id);
+    if (bookingError?.code === '23P01') return fail('dates_taken', 409);
+    if (bookingError?.message === 'not_found') return fail('not_found', 404);
+    if (bookingError?.code === 'P0001' && bookingErrors.has(bookingError.message)) return fail(bookingError.message);
+    console.error('Booking transaction failed', bookingError?.code, bookingError?.message);
     return fail('booking_failed', 500);
   }
 
-  // ---------- مجاني بالكامل (خصم 100%) ----------
-  if (totals.total <= 0) {
-    await admin.from('bookings').update({ status: 'paid' }).eq('id', booking.id);
-    return NextResponse.json({ bookingId: booking.id, total: 0, currency, paid: true });
-  }
+  if (booking.paid) return NextResponse.json({ bookingId: booking.booking_id, total: 0, currency, paid: true });
 
   // ---------- الدفع ----------
   let checkoutUrl: string | null = null;
@@ -211,25 +108,26 @@ export async function POST(req: Request) {
     try {
       const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
       const checkout = await createCheckout({
-        bookingId: booking.id,
-        amount: totals.total,
+        bookingId: booking.booking_id,
+        amount: booking.total,
         currency,
         name,
         phone,
         email: user.email ?? 'customer@sololimo.com',
-        itemName: item.name_ar,
+        itemName: booking.item_name,
         origin,
       });
 
-      await admin.from('payments').insert({
-        booking_id: booking.id,
+      const { error: paymentInsertError } = await admin.from('payments').insert({
+        booking_id: booking.booking_id,
         provider: 'paymob',
         provider_order_id: checkout.orderId,
-        amount: totals.total,
+        amount: booking.total,
         currency,
         status: 'pending',
       });
 
+      if (paymentInsertError) throw paymentInsertError;
       checkoutUrl = checkout.url;
     } catch {
       paymentError = true;
@@ -237,8 +135,8 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({
-    bookingId: booking.id,
-    total: totals.total,
+    bookingId: booking.booking_id,
+    total: booking.total,
     currency,
     checkoutUrl,
     paymentError,

@@ -90,24 +90,12 @@ export default function FaqPage() {
           </p>
 
           <label className="relative block">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gold"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              style={{ padding: '1rem 3rem' }}
+              style={{ paddingBlock: '1rem', paddingInline: '1rem 3rem' }}
               className="w-full rounded-2xl border border-line bg-navy text-white placeholder:text-muted focus:border-gold focus:shadow-lg focus:shadow-gold/10 focus:outline-none"
             />
             {query && (
@@ -198,8 +186,8 @@ export default function FaqPage() {
                         {t(`q${item.n}`)}
                       </span>
                       <span
-                        className={`flex h-8 w-8 shrink-0  justify-center rounded-full border border-line transition-all duration-300 ${
-                          isOpen ? 'rotate-45 bg-gold text-navy' : 'text-gold'
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line transition-all duration-300 ${
+                          isOpen ? 'rotate-180 bg-gold text-navy' : 'text-gold'
                         }`}
                       >
                         <svg
@@ -210,7 +198,7 @@ export default function FaqPage() {
                           strokeLinecap="round"
                           className="h-4 w-4"
                         >
-                          <path d="M12 5v14M5 12h14" />
+                          <path d="m6 9 6 6 6-6" />
                         </svg>
                       </span>
                     </button>

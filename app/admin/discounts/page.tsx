@@ -192,8 +192,8 @@ function DiscountForm({
 
     const supabase = createClient();
     const { error: err } = isEdit
-      ? await supabase.from('discount_codes').update(payload).eq('id', initial!.id)
-      : await supabase.from('discount_codes').insert(payload);
+      ? await supabase.from('discount_codes').update(payload).eq('id', initial!.id).select('id').single()
+      : await supabase.from('discount_codes').insert(payload).select('id').single();
 
     if (err) {
       setError(
@@ -566,7 +566,7 @@ export default function AdminDiscountsPage() {
   async function copy(code: string) {
     try {
       await navigator.clipboard.writeText(code);
-      showToast(`تم نسخ الكود ${code} ✓`);
+      showToast(`تم نسخ الكود ${code}`);
     } catch {
       showToast('معرفناش ننسخ، انسخه يدوي.');
     }
@@ -579,11 +579,11 @@ export default function AdminDiscountsPage() {
     const { error: err } = await createClient()
       .from('discount_codes')
       .update({ active: next })
-      .eq('id', d.id);
+      .eq('id', d.id).select('id').single();
 
     if (err) {
       setItems((p) => p.map((x) => (x.id === d.id ? { ...x, active: !next } : x)));
-      showToast('فشل تغيير الحالة');
+      showToast(err.message);
     } else {
       showToast(next ? 'الكود اتفعّل' : 'الكود اتوقّف');
     }
@@ -594,7 +594,7 @@ export default function AdminDiscountsPage() {
     setDeleteBusy(true);
     setDeleteError('');
 
-    const { error: err } = await createClient().from('discount_codes').delete().eq('id', deleting.id);
+    const { error: err } = await createClient().from('discount_codes').delete().eq('id', deleting.id).select('id').single();
 
     if (err) {
       setDeleteError(
@@ -735,7 +735,6 @@ export default function AdminDiscountsPage() {
           style={{ padding: '0.75rem 1.5rem' }}
           className="flex items-center gap-2 rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
         >
-          <span className="text-xl leading-none">+</span>
           كود جديد
         </button>
       </div>
@@ -821,7 +820,6 @@ export default function AdminDiscountsPage() {
           className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
           style={{ padding: '3.5rem 1.5rem' }}
         >
-          <span className="text-5xl">🏷️</span>
           <p className="text-xl font-bold text-white">
             {items.length === 0 ? 'لسه مفيش أكواد خصم' : 'مفيش نتائج للبحث'}
           </p>
@@ -950,7 +948,7 @@ export default function AdminDiscountsPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة الكود ✓');
+            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة الكود');
             load();
           }}
         />
@@ -967,9 +965,6 @@ export default function AdminDiscountsPage() {
             className="relative w-full max-w-md rounded-3xl border border-line bg-navy-light text-center shadow-2xl shadow-black/60"
             style={{ padding: '2rem 1.5rem' }}
           >
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-2xl">
-              🗑️
-            </span>
             <h3 className="text-xl font-extrabold text-white" style={{ marginBlock: '1rem 0.5rem' }}>
               حذف الكود؟
             </h3>

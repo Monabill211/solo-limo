@@ -21,85 +21,6 @@ const ic = (path: React.ReactNode, size = 'h-5 w-5') => (
 );
 
 const ICONS = {
-  dashboard: ic(
-    <>
-      <rect x="3" y="3" width="7" height="9" rx="1" />
-      <rect x="14" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="12" width="7" height="9" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
-    </>
-  ),
-  bookings: ic(
-    <>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </>
-  ),
-  cars: ic(
-    <>
-      <path d="M3 15l1.6-5.2A2 2 0 0 1 6.5 8.4h11a2 2 0 0 1 1.9 1.4L21 15" />
-      <rect x="3" y="15" width="18" height="4" rx="1" />
-      <circle cx="7" cy="17" r="0.6" />
-      <circle cx="17" cy="17" r="0.6" />
-    </>
-  ),
-  apartments: ic(
-    <>
-      <rect x="5" y="3" width="14" height="18" rx="1" />
-      <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2" />
-    </>
-  ),
-  extras: ic(
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8v8M8 12h8" />
-    </>
-  ),
-  customers: ic(
-    <>
-      <circle cx="9" cy="8" r="4" />
-      <path d="M2 21c0-4 3-7 7-7s7 3 7 7" />
-      <path d="M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5.5-5-6.5" />
-    </>
-  ),
-  discounts: ic(
-    <>
-      <path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42z" />
-      <path d="M7 7h.01" />
-    </>
-  ),
-  finance: ic(
-    <>
-      <path d="M3 3v18h18" />
-      <path d="m7 15 4-4 3 3 5-6" />
-    </>
-  ),
-  airportGuide: ic(
-    <>
-      <path d="M21 3L3 10.5l6.5 2.5L12 21l9-18z" />
-      <path d="M9.5 13L21 3" />
-    </>
-  ),
-  settings: ic(
-    <>
-      <path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0" />
-      <circle cx="16" cy="6" r="2" />
-      <circle cx="8" cy="12" r="2" />
-      <circle cx="18" cy="18" r="2" />
-    </>
-  ),
-  site: ic(
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" />
-    </>
-  ),
-  logout: ic(
-    <>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="m16 17 5-5-5-5M21 12H9" />
-    </>
-  ),
   menu: ic(<path d="M4 6h16M4 12h16M4 18h16" />, 'h-6 w-6'),
   close: ic(<path d="M18 6 6 18M6 6l12 12" />, 'h-6 w-6'),
 };
@@ -141,7 +62,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const [open, setOpen] = useState(false);
 
   async function logout() {
-    await createClient().auth.signOut();
+    const { error } = await createClient().auth.signOut({ scope: 'local' });
+    if (error) return;
     router.replace('/admin/login');
     router.refresh();
   }
@@ -186,7 +108,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             {ICONS.menu}
           </button>
 
-          <Link href="/admin" className="flex items-center gap-3">
+          <Link prefetch={false} href="/admin" className="flex items-center gap-3">
             <img src="/logo.png" alt={t('brand')} className="h-10 w-auto" />
             <span
               className="hidden border-s border-line text-sm font-bold text-gold-light sm:block"
@@ -204,28 +126,20 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             style={{ padding: '0.45rem 0.9rem' }}
             className="hidden items-center gap-2 rounded-xl border border-line text-sm font-bold text-muted transition hover:border-gold hover:text-gold-light md:flex"
           >
-            {ICONS.site}
             {t('viewSite')}
           </Link>
 
-          <div
-            className="flex items-center gap-2.5 rounded-xl border border-line"
-            style={{ padding: '0.25rem 0.6rem 0.25rem 0.35rem' }}
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-gold to-gold-light text-sm font-extrabold text-navy">
-              {t('adminName').charAt(0)}
-            </span>
-            <span className="hidden text-sm font-bold text-white sm:block">{t('adminName')}</span>
-          </div>
+          <span className="hidden text-sm font-bold text-white sm:inline">{t('adminName')}</span>
 
           <button
             type="button"
             aria-label={t('logout')}
             title={t('logout')}
             onClick={logout}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-muted transition hover:border-red-400 hover:text-red-400"
+            className="rounded-xl border border-line text-sm font-bold text-muted transition hover:border-gold hover:text-gold-light"
+            style={{ padding: '0.45rem 0.75rem' }}
           >
-            {ICONS.logout}
+            {t('logout')}
           </button>
         </div>
       </header>
@@ -274,6 +188,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                   return (
                     <Link
                       key={item.href}
+                      prefetch={false}
                       href={item.href}
                       style={{ padding: '0.65rem 0.75rem' }}
                       className={`relative flex items-center gap-3 rounded-xl font-bold transition ${
@@ -285,9 +200,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
                       {active && (
                         <span className="absolute inset-y-2 right-0 w-1 rounded-full bg-gold" />
                       )}
-                      <span className={active ? 'text-gold' : ''}>
-                        {ICONS[item.key as keyof typeof ICONS]}
-                      </span>
                       {t(item.key)}
                     </Link>
                   );
@@ -302,7 +214,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             style={{ padding: '0.7rem 0.75rem', marginBlockStart: '1.5rem' }}
             className="flex items-center gap-3 rounded-xl border border-line font-bold text-muted transition hover:border-gold hover:text-gold-light md:hidden"
           >
-            {ICONS.site}
             {t('viewSite')}
           </Link>
         </aside>

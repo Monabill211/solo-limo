@@ -1,37 +1,12 @@
-// الاستخدام: <BlogSection />
-// صور المقالات: حطها في  public/blog/1.jpg  و  2.jpg  و  3.jpg
-// (لو الصورة مش موجودة بيظهر تدرّج كحلي مكانها)
-
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
-const POSTS = [
-  { n: 1, slug: 'airport-arrival-guide', minutes: 5 },
-  { n: 2, slug: 'car-rental-tips', minutes: 4 },
-  { n: 3, slug: 'hotel-apartment-guide', minutes: 4 },
-] as const;
+import { BLOG_POSTS } from '../lib/blog';
 
-const bg = (n: number) => ({
-  backgroundImage: `url('/blog/${n}.jpg'), linear-gradient(135deg, #1c2943, #0b1220)`,
-});
-
-const Arrow = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
-  >
-    <path d="m9 6 6 6-6 6" />
-  </svg>
-);
-
-export default function BlogSection() {
+export default function BlogSection({ index = false }: { index?: boolean }) {
   const t = useTranslations('Blog');
-  const [main, ...rest] = POSTS;
+  const [main, ...rest] = BLOG_POSTS;
+  const Heading = index ? 'h1' : 'h2';
 
   return (
     <section        className="relative isolate flex flex-col justify-between overflow-hidden bg-navy"
@@ -53,20 +28,19 @@ export default function BlogSection() {
             >
               {t('badge')}
             </span>
-            <h2 className="text-3xl font-extrabold text-white md:text-4xl">{t('title')}</h2>
+            <Heading className="text-3xl font-extrabold text-white md:text-4xl">{t('title')}</Heading>
             <p className="max-w-xl text-muted" style={{ marginBlockStart: '0.6rem' }}>
               {t('subtitle')}
             </p>
           </div>
 
-          <Link
+          {!index && <Link
             href="/blog"
             style={{ padding: '0.55rem 1.4rem' }}
             className="group flex  gap-2 rounded-xl border border-gold font-bold text-gold transition hover:bg-gold hover:text-navy"
           >
             {t('viewAll')}
-            <Arrow />
-          </Link>
+          </Link>}
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -76,8 +50,7 @@ export default function BlogSection() {
             className="group relative flex min-h-[26rem] items-end overflow-hidden rounded-3xl border border-line md:row-span-2"
           >
             <div
-              className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-105"
-              style={bg(main.n)}
+              className="absolute inset-0 bg-linear-to-br from-navy-light to-navy transition duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/60 to-transparent" />
 
@@ -93,10 +66,8 @@ export default function BlogSection() {
               </h3>
               <p className="max-w-md leading-7 text-white/75">{t(`p${main.n}Excerpt`)}</p>
               <div className="flex  gap-4 text-sm text-gold-light">
-                <span>{t('minutes', { n: main.minutes })}</span>
                 <span className="flex  gap-1.5 font-bold">
                   {t('read')}
-                  <Arrow />
                 </span>
               </div>
             </div>
@@ -111,8 +82,7 @@ export default function BlogSection() {
             >
               <div className="relative min-h-44 overflow-hidden sm:w-2/5">
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition duration-700 group-hover:scale-110"
-                  style={bg(p.n)}
+                  className="absolute inset-0 bg-linear-to-br from-navy-light to-navy transition duration-700 group-hover:scale-110"
                 />
               </div>
 
@@ -123,10 +93,8 @@ export default function BlogSection() {
                 </h3>
                 <p className="leading-7 text-muted">{t(`p${p.n}Excerpt`)}</p>
                 <div className="mt-auto flex  justify-between text-sm text-muted">
-                  <span>{t('minutes', { n: p.minutes })}</span>
                   <span className="flex  gap-1.5 font-bold text-gold">
                     {t('read')}
-                    <Arrow />
                   </span>
                 </div>
               </div>

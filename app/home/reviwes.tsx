@@ -6,12 +6,6 @@ import { useLocale, useTranslations } from 'next-intl';
 
 const ITEMS = [1, 2, 3, 4, 5, 6];
 
-const Star = () => (
-  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-gold text-gold">
-    <path d="M12 2l3 6.9 7.5.7-5.7 5 1.7 7.4L12 18l-6.5 4 1.7-7.4-5.7-5 7.5-.7z" />
-  </svg>
-);
-
 export default function ReviewsSection() {
   const t = useTranslations('Reviews');
   const dir = useLocale() === 'ar' ? 'rtl' : 'ltr';
@@ -71,12 +65,7 @@ style={{ paddingBlock: '4.5rem' }}
               className="flex w-80 shrink-0 flex-col gap-4 rounded-3xl border border-line bg-navy-light transition-colors duration-300 hover:border-gold md:w-96"
             >
               <div className="flex  justify-between">
-                <div className="flex gap-1">
-                  {[0, 1, 2, 3, 4].map((s) => (
-                    <Star key={s} />
-                  ))}
-                </div>
-                <span className="text-5xl font-extrabold leading-none text-gold/30">”</span>
+                <span dir="ltr" className="text-sm font-semibold text-gold">5/5</span>
               </div>
 
               <p className="leading-8 text-white/85">{t(`r${n}`)}</p>

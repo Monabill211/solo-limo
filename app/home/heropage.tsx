@@ -6,52 +6,18 @@ import { useTranslations } from 'next-intl';
 
 const WHATSAPP_URL = 'https://wa.me/201044443195';
 
-const icon = (path: React.ReactNode) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-7 w-7"
-  >
-    {path}
-  </svg>
-);
-
 const SERVICES = [
   {
     key: 'airport',
     href: '/airport-guide',
-    svg: icon(
-      <>
-        <path d="M21 3L3 10.5l6.5 2.5L12 21l9-18z" />
-        <path d="M9.5 13L21 3" />
-      </>
-    ),
   },
   {
     key: 'cars',
     href: '/cars',
-    svg: icon(
-      <>
-        <path d="M3 15l1.6-5.2A2 2 0 0 1 6.5 8.4h11a2 2 0 0 1 1.9 1.4L21 15" />
-        <rect x="3" y="15" width="18" height="4" rx="1" />
-        <circle cx="7" cy="17" r="0.6" />
-        <circle cx="17" cy="17" r="0.6" />
-      </>
-    ),
   },
   {
     key: 'apartments',
     href: '/apartments',
-    svg: icon(
-      <>
-        <rect x="5" y="3" width="14" height="18" rx="1" />
-        <path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2" />
-      </>
-    ),
   },
 ] as const;
 
@@ -136,26 +102,12 @@ export default function HeroPage() {
               style={{ padding: '1.25rem 1.4rem' }}
               className="group flex items-center  gap-4 rounded-2xl border border-white/15 bg-black/35 backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:border-gold hover:bg-black/50 hover:shadow-xl hover:shadow-gold/20"
             >
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-gold/40 bg-gold/10 text-gold transition group-hover:bg-gold group-hover:text-navy">
-                {s.svg}
-              </span>
 
               <span className="flex flex-col gap-0.5">
                 <span className="text-lg font-bold text-white">{t(`${s.key}Title`)}</span>
                 <span className="text-sm leading-6 text-white/70">{t(`${s.key}Text`)}</span>
               </span>
 
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="ms-auto h-5 w-5 shrink-0 text-gold transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
-              >
-                <path d="m9 6 6 6-6 6" />
-              </svg>
             </Link>
           ))}
         </div>

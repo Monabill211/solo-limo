@@ -12,7 +12,6 @@ const WHATSAPP_URL = 'https://wa.me/201044443195';
 
 type Service = {
   id: string;
-  icon: string;
   name_ar: string;
   name_en: string;
   description_ar: string | null;
@@ -59,6 +58,7 @@ export default function AirportBooking({ id }: { id: string }) {
   const { currency } = useCurrency();
 
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [extras, setExtras] = useState<Extra[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -87,14 +87,19 @@ export default function AirportBooking({ id }: { id: string }) {
     (async () => {
       const supabase = createClient();
 
-      const { data: s } = await supabase
+      const { data: s, error: itemError } = await supabase
         .from('airport_services')
-        .select('id, icon, name_ar, name_en, description_ar, description_en, price_egp, price_usd')
+        .select('id, name_ar, name_en, description_ar, description_en, price_egp, price_usd')
         .eq('id', id)
         .eq('active', true)
         .maybeSingle();
 
       if (!alive) return;
+      if (itemError) {
+        setLoadFailed(true);
+        setLoading(false);
+        return;
+      }
       if (!s) {
         setLoading(false);
         return;
@@ -106,6 +111,11 @@ export default function AirportBooking({ id }: { id: string }) {
         supabase.auth.getUser(),
       ]);
       if (!alive) return;
+      if (ex.error) {
+        setLoadFailed(true);
+        setLoading(false);
+        return;
+      }
 
       setExtras(
         ((ex.data ?? []) as any[])
@@ -260,6 +270,17 @@ export default function AirportBooking({ id }: { id: string }) {
     );
   }
 
+  if (loadFailed) {
+    return (
+      <div className="mx-auto w-full max-w-lg px-5 py-16 text-center">
+        <p role="alert" className="mb-4 text-red-300">{b('bookingLoadFailed')}</p>
+        <button type="button" className="rounded-xl bg-gold px-5 py-2 font-bold text-navy" onClick={() => window.location.reload()}>
+          {b('bookingRetry')}
+        </button>
+      </div>
+    );
+  }
+
   if (!service) {
     return (
       <div className="text-center" style={{ padding: '5rem 1rem' }}>
@@ -311,13 +332,10 @@ export default function AirportBooking({ id }: { id: string }) {
   return (
     <div className="w-full max-w-6xl" style={{ marginInline: 'auto', padding: '2.5rem 1rem 4rem' }}>
       <Link href="/airport-guide" className="inline-block text-sm font-bold text-gold-light hover:underline" style={{ marginBlockEnd: '1.25rem' }}>
-        ← {t('back')}
+        {t('back')}
       </Link>
 
       <div className="flex flex-wrap items-center gap-4" style={{ marginBlockEnd: '2rem' }}>
-        <span className="flex h-20 w-20 items-center justify-center rounded-2xl border border-gold/40 bg-gold/10 text-4xl">
-          {service.icon}
-        </span>
         <div>
           <span className="inline-block rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold-light" style={{ padding: '0.2rem 0.8rem', marginBlockEnd: '0.4rem' }}>
             {t('badge')}
@@ -380,7 +398,6 @@ export default function AirportBooking({ id }: { id: string }) {
                       style={{ padding: '0.9rem 1rem' }}
                       className={`flex items-center gap-3 rounded-2xl border text-start transition ${on ? 'border-gold bg-gold/10' : 'border-line bg-navy hover:border-gold/60'}`}
                     >
-                      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${on ? 'border-gold bg-gold text-navy' : 'border-line text-transparent'}`}>✓</span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-bold text-white">{isAr ? e.name_ar : e.name_en}</span>
                         <span className="text-sm text-gold-light">{fmt(currency === 'EGP' ? e.price_egp : e.price_usd)}</span>

@@ -91,10 +91,12 @@ export default function AdminApartmentsPage() {
     const { error: err } = await createClient()
       .from('apartments')
       .update({ active: next })
-      .eq('id', a.id);
+      .eq('id', a.id)
+      .select('id')
+      .single();
     if (err) {
       setItems((p) => p.map((x) => (x.id === a.id ? { ...x, active: !next } : x)));
-      showToast('فشل تغيير الحالة');
+      showToast(err.message);
     } else {
       showToast(next ? 'الشقة بقت ظاهرة في الموقع' : 'الشقة اتخبّت من الموقع');
     }
@@ -105,14 +107,10 @@ export default function AdminApartmentsPage() {
     setDeleteBusy(true);
     setDeleteError('');
 
-    const { error: err } = await createClient().from('apartments').delete().eq('id', deleting.id);
+    const { error: err } = await createClient().from('apartments').delete().eq('id', deleting.id).select('id').single();
 
     if (err) {
-      setDeleteError(
-        err.code === '23503'
-          ? 'مينفعش تحذف شقة عليها حجوزات. اقفل زرار "ظاهرة" عشان تخفيها من الموقع بدل الحذف.'
-          : err.message
-      );
+      setDeleteError(err.message);
       setDeleteBusy(false);
       return;
     }
@@ -163,9 +161,7 @@ export default function AdminApartmentsPage() {
     a.images[0] ? (
       <img src={a.images[0]} alt={a.name_ar} className="h-16 w-24 shrink-0 rounded-xl object-cover" />
     ) : (
-      <span className="flex h-16 w-24 shrink-0 items-center justify-center rounded-xl border border-line bg-navy text-2xl">
-        🏢
-      </span>
+      <span className="h-16 w-24 shrink-0 rounded-xl border border-line bg-navy" aria-hidden="true" />
     );
 
   const Amenities = ({ a }: { a: ApartmentRow }) =>
@@ -227,7 +223,6 @@ export default function AdminApartmentsPage() {
           style={{ padding: '0.75rem 1.5rem' }}
           className="flex items-center gap-2 rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold/40"
         >
-          <span className="text-xl leading-none">+</span>
           إضافة شقة
         </button>
       </div>
@@ -290,7 +285,6 @@ export default function AdminApartmentsPage() {
           className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-line bg-navy-light text-center"
           style={{ padding: '3.5rem 1.5rem' }}
         >
-          <span className="text-5xl">🏢</span>
           <p className="text-xl font-bold text-white">
             {items.length === 0 ? 'لسه مفيش شقق' : 'مفيش نتائج للبحث'}
           </p>
@@ -430,7 +424,7 @@ export default function AdminApartmentsPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة الشقة ✓');
+            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة الشقة');
             load();
           }}
         />
@@ -447,9 +441,6 @@ export default function AdminApartmentsPage() {
             className="relative w-full max-w-md rounded-3xl border border-line bg-navy-light text-center shadow-2xl shadow-black/60"
             style={{ padding: '2rem 1.5rem' }}
           >
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15 text-2xl">
-              🗑️
-            </span>
             <h3 className="text-xl font-extrabold text-white" style={{ marginBlock: '1rem 0.5rem' }}>
               حذف الشقة؟
             </h3>

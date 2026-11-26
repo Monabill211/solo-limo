@@ -1,17 +1,15 @@
 import { serviceClient } from './admin-server';
 
-// سعر الدولار بالجنيه: من جدول settings، ولو مش موجود من .env، وآخرها 50
 export async function getUsdRate() {
-  try {
-    const { data } = await serviceClient()
-      .from('settings')
-      .select('value')
-      .eq('key', 'usd_egp_rate')
-      .maybeSingle();
-
-    const n = Number(data?.value);
-    if (n > 0) return n;
-  } catch {}
-
-  return Number(process.env.USD_EGP_RATE || 50);
+  const { data, error } = await serviceClient()
+    .from('settings')
+    .select('value')
+    .eq('key', 'usd_egp_rate')
+    .single();
+  if (error) throw error;
+  const rate: unknown = data.value;
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate < 0.000001 || rate > 99999999.999999) {
+    throw new Error('Invalid usd_egp_rate');
+  }
+  return Number(rate.toFixed(6));
 }

@@ -39,10 +39,6 @@ export default function PromoBanner() {
               className="inline-flex w-fit  gap-2 rounded-full border border-gold/40 bg-gold/10 text-sm font-bold text-gold-light"
               style={{ padding: '0.3rem 0.9rem' }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                <rect x="3" y="8" width="18" height="4" rx="1" />
-                <path d="M12 8v13M19 12v9H5v-9M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5" />
-              </svg>
               {t('badge')}
             </span>
 

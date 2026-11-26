@@ -2,7 +2,6 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { serviceClient } from '@/app/lib/admin-server';
 
-// ⚠️ راجع ترتيب حقول الـ HMAC مع توثيق Paymob الحالي قبل الإطلاق
 const FIELDS = [
   'amount_cents', 'created_at', 'currency', 'error_occured', 'has_parent_transaction',
   'id', 'integration_id', 'is_3d_secure', 'is_auth', 'is_capture', 'is_refunded',
@@ -10,9 +9,12 @@ const FIELDS = [
   'source_data.pan', 'source_data.sub_type', 'source_data.type', 'success',
 ];
 
-const get = (o: any, path: string) => path.split('.').reduce((a, k) => a?.[k], o);
+function get(value: unknown, path: string) {
+  return path.split('.').reduce<unknown>((current, key) =>
+    current && typeof current === 'object' ? (current as Record<string, unknown>)[key] : undefined, value);
+}
 
-function validSignature(obj: any, received: string | null) {
+function validSignature(obj: unknown, received: string | null) {
   const secret = process.env.PAYMOB_HMAC_SECRET;
   if (!secret || !received) return false;
 
@@ -32,33 +34,24 @@ export async function POST(req: Request) {
   const hmac = new URL(req.url).searchParams.get('hmac');
   if (!validSignature(obj, hmac)) return NextResponse.json({ ok: false }, { status: 401 });
 
-  const admin = serviceClient();
-
-  const { data: payment } = await admin
-    .from('payments')
-    .select('id, booking_id, amount, status')
-    .eq('provider_order_id', String(obj.order?.id ?? ''))
-    .maybeSingle();
-
-  if (!payment) return NextResponse.json({ ok: true }); // مش بتاعنا
-  if (payment.status === 'success') return NextResponse.json({ ok: true }); // اتعالج قبل كده
-  if (obj.pending === true) return NextResponse.json({ ok: true });
-
-  const paidAmount = Number(obj.amount_cents) / 100;
-  const success = obj.success === true && Math.abs(paidAmount - Number(payment.amount)) < 0.01;
-
-  await admin
-    .from('payments')
-    .update({
-      status: success ? 'success' : 'failed',
-      provider_txn_id: String(obj.id),
-      raw: obj,
-    })
-    .eq('id', payment.id);
-
-  if (success) {
-    await admin.from('bookings').update({ status: 'paid' }).eq('id', payment.booking_id);
+  const orderId = String(obj.order?.id ?? '');
+  const transactionId = String(obj.id ?? '');
+  if (obj.pending === true || !orderId) return NextResponse.json({ ok: true });
+  const amount = Number(obj.amount_cents);
+  if (!transactionId || !Number.isSafeInteger(amount) || amount < 0 || typeof obj.currency !== 'string') {
+    return NextResponse.json({ ok: false }, { status: 400 });
   }
-
+  const { error } = await serviceClient().rpc('apply_paymob_result', {
+    p_order_id: orderId,
+    p_transaction_id: transactionId,
+    p_currency: obj.currency,
+    p_amount_cents: amount,
+    p_success: obj.success === true && !obj.is_refunded && !obj.is_voided && !(obj.is_auth && !obj.is_capture),
+    p_payload: obj,
+  });
+  if (error) {
+    if (error.message === 'payment_amount_or_currency_mismatch') return NextResponse.json({ ok: false }, { status: 422 });
+    return NextResponse.json({ ok: false }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }
