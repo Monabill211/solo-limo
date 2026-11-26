@@ -3,6 +3,20 @@ import { useTranslations } from 'next-intl';
 
 import { BLOG_POSTS } from '../lib/blog';
 
+const Arrow = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+  >
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+);
+
 export default function BlogSection({ index = false }: { index?: boolean }) {
   const t = useTranslations('Blog');
   const [main, ...rest] = BLOG_POSTS;
@@ -40,6 +54,7 @@ export default function BlogSection({ index = false }: { index?: boolean }) {
             className="group flex  gap-2 rounded-xl border border-gold font-bold text-gold transition hover:bg-gold hover:text-navy"
           >
             {t('viewAll')}
+            <Arrow />
           </Link>}
         </div>
 
@@ -68,6 +83,7 @@ export default function BlogSection({ index = false }: { index?: boolean }) {
               <div className="flex  gap-4 text-sm text-gold-light">
                 <span className="flex  gap-1.5 font-bold">
                   {t('read')}
+                  <Arrow />
                 </span>
               </div>
             </div>
@@ -95,6 +111,7 @@ export default function BlogSection({ index = false }: { index?: boolean }) {
                 <div className="mt-auto flex  justify-between text-sm text-muted">
                   <span className="flex  gap-1.5 font-bold text-gold">
                     {t('read')}
+                    <Arrow />
                   </span>
                 </div>
               </div>

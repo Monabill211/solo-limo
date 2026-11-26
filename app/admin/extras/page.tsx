@@ -370,7 +370,7 @@ export default function AdminExtrasPage() {
         p_items: STARTERS.map((item) => ({ ...item, id: newCatalogId(), active: true })),
       });
       if (error) throw error;
-      showToast('تمت إضافة الإضافات الجاهزة');
+      showToast('تمت إضافة الإضافات الجاهزة ✓');
       void load();
     } catch (error) {
       showToast(catalogError(error));
@@ -582,7 +582,7 @@ export default function AdminExtrasPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة الإضافة');
+            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة الإضافة ✓');
             load();
           }}
         />

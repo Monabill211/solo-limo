@@ -197,7 +197,7 @@ export default function AdminBookingsPage() {
       setItems((p) => p.map((x) => (x.id === b.id ? { ...x, status: next } : x)));
       setConfirm(null);
       showToast(
-        next === 'paid' ? 'تم تأكيد الدفع' : next === 'cancelled' ? 'تم إلغاء الحجز' : 'رجع الحجز معلّق'
+        next === 'paid' ? 'تم تأكيد الدفع ✓' : next === 'cancelled' ? 'تم إلغاء الحجز' : 'رجع الحجز معلّق'
       );
     }
     setBusyId(null);
@@ -274,7 +274,7 @@ export default function AdminBookingsPage() {
     ) : (
       <>
         <p className="text-sm text-white">
-          {dateAr(b.start_date)} – {dateAr(b.end_date)}
+          {dateAr(b.start_date)} ← {dateAr(b.end_date)}
         </p>
         <p className="text-xs text-muted">{durationText(b)}</p>
       </>
@@ -323,7 +323,7 @@ export default function AdminBookingsPage() {
           style={{ padding: '0.65rem 1.3rem' }}
           className="rounded-xl border border-gold/50 font-bold text-gold transition hover:bg-gold hover:text-navy disabled:opacity-50"
         >
-          {loading ? 'جاري التحديث...' : 'تحديث'}
+          {loading ? 'جاري التحديث...' : '↻ تحديث'}
         </button>
       </div>
 

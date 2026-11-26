@@ -392,7 +392,7 @@ export default function AdminCarsPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة السيارة');
+            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة السيارة ✓');
             load();
           }}
         />

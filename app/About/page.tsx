@@ -164,8 +164,19 @@ export default function AboutPage() {
                   {t(`${s.key}Title`)}
                 </h3>
                 <p className="leading-8 text-muted">{t(`${s.key}Text`)}</p>
-                <span className="font-bold text-gold" style={{ marginBlockStart: 'auto' }}>
+                <span className="flex gap-1.5 font-bold text-gold" style={{ marginBlockStart: 'auto' }}>
                   {t('discover')}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+                  >
+                    <path d="m9 6 6 6-6 6" />
+                  </svg>
                 </span>
               </Link>
             ))}

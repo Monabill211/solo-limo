@@ -130,7 +130,7 @@ export default function AdminLoginForm({ reason }: { reason?: string }) {
           className="block text-center text-sm text-muted transition hover:text-gold-light"
           style={{ marginBlockStart: '1.5rem' }}
         >
-          الرجوع للموقع
+          ← الرجوع للموقع
         </Link>
       </div>
     </div>

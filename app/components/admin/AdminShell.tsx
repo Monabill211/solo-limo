@@ -21,6 +21,12 @@ const ic = (path: React.ReactNode, size = 'h-5 w-5') => (
 );
 
 const ICONS = {
+  logout: ic(
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5M21 12H9" />
+    </>
+  ),
   menu: ic(<path d="M4 6h16M4 12h16M4 18h16" />, 'h-6 w-6'),
   close: ic(<path d="M18 6 6 18M6 6l12 12" />, 'h-6 w-6'),
 };
@@ -136,10 +142,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             aria-label={t('logout')}
             title={t('logout')}
             onClick={logout}
-            className="rounded-xl border border-line text-sm font-bold text-muted transition hover:border-gold hover:text-gold-light"
-            style={{ padding: '0.45rem 0.75rem' }}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line text-muted transition hover:border-red-400 hover:text-red-400"
           >
-            {t('logout')}
+            {ICONS.logout}
           </button>
         </div>
       </header>

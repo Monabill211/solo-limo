@@ -436,6 +436,17 @@ export default function ApartmentsPage() {
                           style={{ padding: '0.55rem 1.1rem' }}
                         >
                           {t('viewBook')}
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+                          >
+                            <path d="m9 6 6 6-6 6" />
+                          </svg>
                         </span>
                       </div>
                     </div>

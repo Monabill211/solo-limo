@@ -948,7 +948,7 @@ export default function AdminDiscountsPage() {
           onClose={() => setFormOpen(false)}
           onSaved={() => {
             setFormOpen(false);
-            showToast(editing ? 'تم حفظ التعديلات' : 'تمت إضافة الكود');
+            showToast(editing ? 'تم حفظ التعديلات ✓' : 'تمت إضافة الكود ✓');
             load();
           }}
         />

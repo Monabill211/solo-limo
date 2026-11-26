@@ -7,28 +7,63 @@ import { useTranslations } from 'next-intl';
 
 const WHATSAPP_URL = 'https://wa.me/201044443195';
 
+const icon = (path: React.ReactNode) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+  >
+    {path}
+  </svg>
+);
+
 // غيّر الروابط دي لصفحاتك، والرابط الفاضي ('') بيشيل الأيقونة
 const SOCIAL = [
   {
     key: 'Facebook',
     href: 'https://facebook.com/',
+    svg: icon(<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />),
   },
   {
     key: 'Instagram',
     href: 'https://instagram.com/',
+    svg: icon(
+      <>
+        <rect x="2" y="2" width="20" height="20" rx="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <path d="M17.5 6.5h.01" />
+      </>
+    ),
   },
   {
     key: 'TikTok',
     href: 'https://tiktok.com/',
+    svg: icon(
+      <>
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </>
+    ),
   },
   {
     key: 'Telegram',
     href: 'https://t.me/',
+    svg: icon(
+      <>
+        <path d="m22 2-7 20-4-9-9-4Z" />
+        <path d="M22 2 11 13" />
+      </>
+    ),
   },
 ].filter((s) => s.href);
 
 const socialClass =
-  'flex min-h-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition hover:-translate-y-1 hover:border-gold hover:bg-gold hover:text-navy';
+  'flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition hover:-translate-y-1 hover:border-gold hover:bg-gold hover:text-navy';
 
 export default function HeroAboutSection() {
   const tHero = useTranslations('Hero');
@@ -42,9 +77,8 @@ export default function HeroAboutSection() {
       rel="noreferrer"
       aria-label={s.key}
       className={socialClass}
-      style={{ paddingInline: '0.75rem' }}
     >
-      {s.key}
+      {s.svg}
     </a>
   ));
 
@@ -91,8 +125,8 @@ export default function HeroAboutSection() {
       </div>
       {/* ================= الجزء الأول: Hero ================= */}
       <div className="relative flex items-end">
-        {/* روابط التواصل على الشاشات الكبيرة */}
-        <div className="absolute z-10 end-5 top-1/2 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
+        {/* شريط السوشيال على الجنب (الشاشات الكبيرة) */}
+        <div className="absolute end-5 top-1/2 hidden -translate-y-1/2 flex-col gap-3 md:flex">
           {socials}
         </div>
 
@@ -160,7 +194,7 @@ export default function HeroAboutSection() {
           </div>
 
           {/* السوشيال على الموبايل */}
-          <div className="flex flex-wrap gap-3 lg:hidden" style={{ marginBlockStart: '1.75rem' }}>
+          <div className="flex gap-3 md:hidden" style={{ marginBlockStart: '1.75rem' }}>
             {socials}
           </div>
         </div>

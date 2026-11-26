@@ -108,6 +108,17 @@ export default function HeroPage() {
                 <span className="text-sm leading-6 text-white/70">{t(`${s.key}Text`)}</span>
               </span>
 
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="ms-auto h-5 w-5 shrink-0 text-gold transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+              >
+                <path d="m9 6 6 6-6 6" />
+              </svg>
             </Link>
           ))}
         </div>

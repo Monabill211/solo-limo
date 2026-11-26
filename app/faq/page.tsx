@@ -186,8 +186,8 @@ export default function FaqPage() {
                         {t(`q${item.n}`)}
                       </span>
                       <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line transition-all duration-300 ${
-                          isOpen ? 'rotate-180 bg-gold text-navy' : 'text-gold'
+                        className={`flex h-8 w-8 shrink-0  justify-center rounded-full border border-line transition-all duration-300 ${
+                          isOpen ? 'rotate-45 bg-gold text-navy' : 'text-gold'
                         }`}
                       >
                         <svg
@@ -198,7 +198,7 @@ export default function FaqPage() {
                           strokeLinecap="round"
                           className="h-4 w-4"
                         >
-                          <path d="m6 9 6 6 6-6" />
+                          <path d="M12 5v14M5 12h14" />
                         </svg>
                       </span>
                     </button>

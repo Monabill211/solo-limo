@@ -198,7 +198,7 @@ export default function AdminSettingsPage() {
     setProfileMsg(
       error
         ? { kind: 'error', text: 'فشل الحفظ: ' + error.message }
-        : { kind: 'success', text: 'تم حفظ بياناتك' }
+        : { kind: 'success', text: 'تم حفظ بياناتك ✓' }
     );
   }
 
@@ -232,7 +232,7 @@ export default function AdminSettingsPage() {
     setCurrent('');
     setNext('');
     setConfirm('');
-    setPwMsg({ kind: 'success', text: 'تم تغيير كلمة المرور بنجاح' });
+    setPwMsg({ kind: 'success', text: 'تم تغيير كلمة المرور بنجاح ✓' });
   }
 
   async function saveRate(e: React.FormEvent) {
@@ -260,7 +260,7 @@ export default function AdminSettingsPage() {
                 ? 'الحساب ده ملوش صلاحية التعديل.'
                 : 'فشل الحفظ: ' + error.message,
           }
-        : { kind: 'success', text: 'تم حفظ سعر الصرف وهيتطبق على الحجوزات الجديدة.' }
+        : { kind: 'success', text: 'تم حفظ سعر الصرف ✓ وهيتطبق على الحجوزات الجديدة.' }
     );
   }
 

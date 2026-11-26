@@ -419,7 +419,7 @@
   "loading": "Loading...",
   "noAccount": "No account? Create a new one",
   "haveAccount": "Have an account? Log in",
-  "backHome": "Back to the website",
+  "backHome": "← Back to the website",
   "checkEmail": "Your account was created! Check your email and confirm the message so you can log in.",
   "invalidCredentials": "Incorrect email or password.",
   "alreadyRegistered": "This email is already registered, try logging in.",
@@ -662,7 +662,7 @@
   "unknownPaymentTitle": "Payment status unavailable",
   "unknownPaymentText": "Open the payment return link or contact us with your booking reference.",
   "refreshPayment": "Refresh status",
-  "successTitle": "Your booking is confirmed",
+  "successTitle": "Your booking is confirmed ✓",
   "successText": "Thank you! You will receive a confirmation, and our team will be waiting at the agreed time.",
   "failTitle": "Payment was not completed",
   "failText": "The transaction failed or was cancelled, and you were not charged. Try again or message us on WhatsApp.",
@@ -826,7 +826,7 @@
   "phone": "Phone number",
   "save": "Save",
   "saving": "Saving...",
-  "saved": "Your details were saved",
+  "saved": "Your details were saved ✓",
   "nameError": "Please enter your name.",
 
   "changePassword": "Change password",
@@ -839,7 +839,7 @@
   "pwMismatch": "The new passwords do not match.",
   "pwSame": "The new password must be different from the current one.",
   "pwWrong": "The current password is incorrect.",
-  "pwChanged": "Password changed successfully"
+  "pwChanged": "Password changed successfully ✓"
 }
 
 }

@@ -604,7 +604,7 @@ export default function AdminCustomersPage() {
                             {b.cars?.name_ar ?? b.apartments?.name_ar ?? '—'}
                           </p>
                           <p className="text-xs text-muted">
-                            {dateAr(b.start_date)} – {dateAr(b.end_date)}
+                            {dateAr(b.start_date)} ← {dateAr(b.end_date)}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">

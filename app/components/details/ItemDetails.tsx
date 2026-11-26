@@ -140,8 +140,8 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
   const bookHref = `/booking?type=${type}&id=${row.id}`;
   const waText = encodeURIComponent(`${t('waMessage')} ${name}`);
 
-  const galleryButton =
-    'absolute top-1/2 flex min-h-10 -translate-y-1/2 items-center justify-center rounded-lg border border-line bg-navy/85 text-xs font-bold text-white backdrop-blur transition hover:bg-gold hover:text-navy';
+  const arrow =
+    'absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-xl text-white backdrop-blur transition hover:bg-gold hover:text-navy';
 
   return (
     <div className="w-full max-w-6xl" style={{ marginInline: 'auto', padding: '2.5rem 1rem 4rem' }}>
@@ -150,7 +150,7 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
         className="inline-block text-sm font-bold text-gold-light hover:underline"
         style={{ marginBlockEnd: '1.5rem' }}
       >
-        {backLabel}
+        ← {backLabel}
       </Link>
 
       <div className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
@@ -170,11 +170,11 @@ export default function ItemDetails({ type, id }: { type: Kind; id: string }) {
 
             {count > 1 && (
               <>
-                <button type="button" onClick={() => go(-1)} aria-label={t('prev')} className={`${galleryButton} start-3`} style={{ paddingInline: '0.65rem' }}>
-                  {t('prev')}
+                <button type="button" onClick={() => go(-1)} aria-label={t('prev')} className={`${arrow} start-3`}>
+                  <span className="rtl:rotate-180">‹</span>
                 </button>
-                <button type="button" onClick={() => go(1)} aria-label={t('next')} className={`${galleryButton} end-3`} style={{ paddingInline: '0.65rem' }}>
-                  {t('next')}
+                <button type="button" onClick={() => go(1)} aria-label={t('next')} className={`${arrow} end-3`}>
+                  <span className="rtl:rotate-180">›</span>
                 </button>
                 <span
                   className="absolute bottom-3 end-3 rounded-full bg-black/55 text-xs font-bold text-white backdrop-blur"

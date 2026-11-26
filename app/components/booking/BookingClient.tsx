@@ -337,7 +337,7 @@ export default function BookingClient({ type, id }: { type: Kind; id: string }) 
   return (
     <div className="w-full max-w-6xl" style={{ marginInline: 'auto', padding: '2.5rem 1rem 4rem' }}>
       <Link href={backHref} className="inline-block text-sm font-bold text-gold-light hover:underline" style={{ marginBlockEnd: '1.25rem' }}>
-        {isCar ? t('backCars') : t('backApartments')}
+        ← {isCar ? t('backCars') : t('backApartments')}
       </Link>
 
       <div className="flex flex-wrap items-center gap-4" style={{ marginBlockEnd: '2rem' }}>

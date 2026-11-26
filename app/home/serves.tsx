@@ -82,6 +82,17 @@ export default function ServiceCards() {
                 className="relative flex items-center justify-center gap-2 rounded-xl bg-linear-to-br from-gold to-gold-light font-bold text-navy transition hover:shadow-lg hover:shadow-gold/40"
               >
                 {t(`${s.key}Button`)}
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+                >
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
               </Link>
             </div>
           ))}
